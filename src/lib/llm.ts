@@ -122,22 +122,23 @@ export async function generateReply(params: GenerateReplyParams): Promise<string
 }
 
 export interface QualificationExtraction {
-  empresa_ou_papel: string | null;
+  produto_interesse: string | null;
   o_que_busca: string | null;
-  momento: string | null;
+  estagio_compra: "descobrindo" | "comparando" | "pronto_para_comprar" | "indefinido";
   fit: "alto" | "medio" | "baixo" | "indefinido";
-  quer_falar_com_humano: boolean;
-  resumo_para_humano: string;
+  objecoes: string | null;
+  resumo: string;
 }
 
-const EXTRACTION_SYSTEM_PROMPT = `Você lê uma conversa entre visitante e consultor comercial de IA. Organize o que já se sabe em JSON para o time de vendas.
+const EXTRACTION_SYSTEM_PROMPT = `Você lê uma conversa entre visitante e assistente de vendas de IA num site. Organize o que já se sabe em JSON pro dono do site acompanhar no painel.
 
 Regras:
 - Só preencha campos com informação que apareceu na conversa. Se não apareceu, use null.
 - Nunca invente dados.
-- "fit": "alto", "medio", "baixo" ou "indefinido".
-- "quer_falar_com_humano": true se pediu reunião, especialista, ou aceitou agendar.
-- "resumo_para_humano": 1–3 frases objetivas para o vendedor antes da call.
+- "estagio_compra": "descobrindo" (ainda entendendo o que precisa), "comparando" (avaliando opções/preço), "pronto_para_comprar" (decidido, faltando só finalizar) ou "indefinido".
+- "fit": "alto", "medio", "baixo" ou "indefinido" — o quanto o que a empresa oferece parece resolver o que o visitante busca.
+- "objecoes": principais hesitações/barreiras que a pessoa levantou (preço, prazo, dúvida técnica etc.), ou null se não houve.
+- "resumo": 1–3 frases objetivas resumindo o interesse do visitante.
 
 Responda só JSON, sem markdown.`;
 

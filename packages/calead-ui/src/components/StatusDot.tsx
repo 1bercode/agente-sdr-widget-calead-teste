@@ -8,9 +8,9 @@ export interface StatusDotProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const statusClasses = {
-  online: "bg-emerald-400",
-  offline: "bg-white/20",
-  busy: "bg-amber-400",
+  online: "bg-emerald-500",
+  offline: "bg-[#141B2E]/20",
+  busy: "bg-amber-500",
 };
 
 const glowClasses = {

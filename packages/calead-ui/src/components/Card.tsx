@@ -17,8 +17,8 @@ export function Card({ children, padding = "md", className, ...props }: CardProp
   return (
     <div
       className={cn(
-        "rounded-2xl border border-white/[0.09] bg-[rgba(23,24,28,0.72)] backdrop-blur-[20px] backdrop-saturate-[1.3] shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)]",
-        "transition hover:border-white/[0.16]",
+        "rounded-2xl border border-[#141B2E]/[0.07] bg-white shadow-[0_16px_40px_-24px_rgba(20,27,46,0.25)]",
+        "transition hover:border-[#141B2E]/[0.14]",
         paddingClasses[padding],
         className
       )}
@@ -35,7 +35,7 @@ export function CardTitle({ children, className }: { children: ReactNode; classN
   return (
     <h2
       className={cn(
-        "text-[11px] font-semibold uppercase tracking-[0.05em] text-white/40 font-sans",
+        "text-[11px] font-semibold uppercase tracking-[0.05em] text-[#141B2E]/40 font-sans",
         className
       )}
     >

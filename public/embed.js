@@ -103,6 +103,9 @@
     iframe.setAttribute("scrolling", "no");
     iframe.setAttribute("frameborder", "0");
     iframe.setAttribute("importance", "high");
+    // Necessário pra gravação de voz (getUserMedia) funcionar dentro do
+    // iframe cross-origin — sem isso o navegador bloqueia o microfone.
+    iframe.setAttribute("allow", "microphone");
 
     container.appendChild(iframe);
     document.body.appendChild(container);

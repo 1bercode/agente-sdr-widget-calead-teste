@@ -18,13 +18,13 @@ function uid() {
 type WidgetMessage = ChatMessage & { animate?: boolean };
 
 const OPENING_MESSAGE = (companyName: string) =>
-  `Oi! Sou o consultor de IA da ${companyName}. Me conta o que você precisa — posso explicar nossos serviços e marcar uma conversa com um especialista se fizer sentido.`;
+  `Oi! Sou o assistente de vendas de IA da ${companyName}. Me conta o que você está procurando que te ajudo a encontrar a melhor opção.`;
 
 function defaultSuggestions(companyName: string) {
   return [
-    `O que a ${companyName} faz?`,
-    "Quanto custa um projeto?",
-    "Como funciona o processo?",
+    `O que a ${companyName} vende?`,
+    "Quanto custa?",
+    "Qual a melhor opção pra mim?",
   ];
 }
 
@@ -79,12 +79,16 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     },
   ]);
   const [input, setInput] = useState("");
-  const [handoffRequested, setHandoffRequested] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isTypingReply, setIsTypingReply] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const conversationIdRef = useRef<string | null>(null);
   const visitorSessionIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const scrollToBottom = useCallback(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -173,27 +177,78 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     void sendMessage(input);
   }
 
-  async function handleTalkToHuman() {
-    if (handoffRequested) return;
-    setHandoffRequested(true);
-    pushMessage(
-      "system",
-      "Perfeito — anotei seu interesse em falar com um especialista. Em breve alguém da equipe entra em contato para agendar a reunião."
-    );
+  async function transcribeAudio(blob: Blob): Promise<string | null> {
     try {
-      const res = await fetch("/api/handoff", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationId: conversationIdRef.current,
-          agentId,
-          visitorSessionId: visitorSessionIdRef.current,
-        }),
-      });
-      const data = await res.json();
-      if (data.conversationId) conversationIdRef.current = data.conversationId;
+      const form = new FormData();
+      form.append("audio", blob, "audio.webm");
+      const res = await fetch("/api/transcribe", { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || typeof data.text !== "string") return null;
+      return data.text;
     } catch (err) {
-      console.error("falha ao registrar pedido de handoff:", err);
+      console.error("falha ao transcrever áudio:", err);
+      return null;
+    }
+  }
+
+  async function startRecording() {
+    if (isRecording || isTranscribing) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      audioChunksRef.current = [];
+
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : undefined;
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        audioChunksRef.current = [];
+
+        if (blob.size === 0) return;
+
+        setIsTranscribing(true);
+        const text = await transcribeAudio(blob);
+        setIsTranscribing(false);
+
+        if (text && text.trim()) {
+          if (mode === "bar") expand();
+          void sendMessage(text);
+        }
+      };
+
+      recorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("não consegui acessar o microfone:", err);
+      pushMessage(
+        "system",
+        "Não consegui acessar seu microfone. Confere se o navegador tem permissão pra esse site."
+      );
+    }
+  }
+
+  function stopRecording() {
+    if (!isRecording) return;
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  }
+
+  function handleMicClick() {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      void startRecording();
     }
   }
 
@@ -207,6 +262,9 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
         onSubmit={handleSend}
         onSuggestionSelect={(text) => void sendMessage(text)}
         disabled={isSending || isTypingReply}
+        onMicClick={handleMicClick}
+        isRecording={isRecording}
+        isTranscribing={isTranscribing}
       />
     );
   }
@@ -254,18 +312,9 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
           onChange={setInput}
           onSend={handleSend}
           disabled={isSending || isTypingReply}
-          meetingCta={
-            <button
-              type="button"
-              onClick={handleTalkToHuman}
-              disabled={handoffRequested}
-              className="w-full text-center text-xs text-white/45 transition hover:text-white/75 disabled:cursor-default disabled:opacity-50"
-            >
-              {handoffRequested
-                ? "Interesse em reunião registrado ✓"
-                : "Prefere agendar uma reunião com um especialista?"}
-            </button>
-          }
+          onMicClick={handleMicClick}
+          isRecording={isRecording}
+          isTranscribing={isTranscribing}
         />
       </ChatPanel>
     </div>

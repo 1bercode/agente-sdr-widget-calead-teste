@@ -108,6 +108,9 @@ export interface ChatFloatingBarProps {
   onActivate?: () => void;
   onFocus?: () => void;
   placeholder?: string;
+  onMicClick?: () => void;
+  isRecording?: boolean;
+  isTranscribing?: boolean;
 }
 
 export function ChatFloatingBar({
@@ -118,6 +121,9 @@ export function ChatFloatingBar({
   onSubmit,
   onSuggestionSelect,
   disabled = false,
+  onMicClick,
+  isRecording = false,
+  isTranscribing = false,
 }: ChatFloatingBarProps) {
   const [hovered, setHovered] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -248,10 +254,16 @@ export function ChatFloatingBar({
 
           <button
             type="button"
-            disabled
-            title="Conversa por voz chega em breve"
-            aria-label="Falar com agente (em breve)"
-            className="calead-mic-glow flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[16px] bg-[#2a2a2e] text-emerald-400 transition hover:bg-[#323238] disabled:cursor-default"
+            onClick={onMicClick}
+            disabled={disabled || isTranscribing}
+            title={isRecording ? "Parar gravação" : "Falar com o agente"}
+            aria-label={isRecording ? "Parar gravação" : "Falar com o agente"}
+            className={cn(
+              "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[16px] transition disabled:cursor-default disabled:opacity-50",
+              isRecording
+                ? "bg-red-500/90 text-white animate-pulse"
+                : "calead-mic-glow bg-[#2a2a2e] text-emerald-400 hover:bg-[#323238]"
+            )}
           >
             <MicIcon />
           </button>

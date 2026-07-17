@@ -25,17 +25,14 @@ async function runQualificationExtraction(
     const extraction = await extractQualification(fullHistory);
     if (!extraction) return;
 
-    await updateQualification(
-      conversationId,
-      {
-        empresa_ou_papel: extraction.empresa_ou_papel,
-        o_que_busca: extraction.o_que_busca,
-        momento: extraction.momento,
-        fit: extraction.fit,
-        resumo_para_humano: extraction.resumo_para_humano,
-      },
-      extraction.quer_falar_com_humano ? { wantsHuman: true } : {}
-    );
+    await updateQualification(conversationId, {
+      produto_interesse: extraction.produto_interesse,
+      o_que_busca: extraction.o_que_busca,
+      estagio_compra: extraction.estagio_compra,
+      fit: extraction.fit,
+      objecoes: extraction.objecoes,
+      resumo: extraction.resumo,
+    });
   } catch (err) {
     console.error("[/api/chat] extração de qualificação falhou:", err);
   }

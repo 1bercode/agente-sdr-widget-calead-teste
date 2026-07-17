@@ -16,8 +16,8 @@ export function Input({ shape = "default", className, ...props }: InputProps) {
   return (
     <input
       className={cn(
-        "w-full border border-white/10 bg-white/[0.04] text-[13.5px] text-white/90 outline-none transition font-sans",
-        "placeholder:text-white/40 focus:border-white/25 focus:bg-white/[0.06] disabled:opacity-50",
+        "w-full border border-[#141B2E]/[0.12] bg-white text-[13.5px] text-[#141B2E]/90 outline-none transition font-sans",
+        "placeholder:text-[#141B2E]/35 focus:border-[#14B8A6]/50 focus:bg-white disabled:opacity-50",
         shapeClasses[shape],
         className
       )}

@@ -56,18 +56,15 @@ export async function insertMessage(conversationId: string, role: ChatMessage["r
 }
 
 export interface QualificationPatch {
-  empresa_ou_papel?: string | null;
+  produto_interesse?: string | null;
   o_que_busca?: string | null;
-  momento?: string | null;
+  estagio_compra?: "descobrindo" | "comparando" | "pronto_para_comprar" | "indefinido";
   fit?: "alto" | "medio" | "baixo" | "indefinido";
-  resumo_para_humano?: string | null;
+  objecoes?: string | null;
+  resumo?: string | null;
 }
 
-export async function updateQualification(
-  conversationId: string,
-  patch: QualificationPatch,
-  opts: { wantsHuman?: boolean } = {}
-) {
+export async function updateQualification(conversationId: string, patch: QualificationPatch) {
   const db = supabaseServer();
 
   const { data: current } = await db
@@ -82,25 +79,11 @@ export async function updateQualification(
     qualification: mergedQualification,
     updated_at: new Date().toISOString(),
   };
-  if (patch.resumo_para_humano) update.context_summary = patch.resumo_para_humano;
-  if (typeof opts.wantsHuman === "boolean") {
-    update.wants_human = opts.wantsHuman;
-    if (opts.wantsHuman) update.status = "handoff_requested";
-  } else if (patch.fit === "alto") {
-    update.status = "qualified";
-  }
+  if (patch.resumo) update.context_summary = patch.resumo;
+  if (patch.estagio_compra === "pronto_para_comprar") update.status = "qualified";
 
   const { error } = await db.from("conversations").update(update).eq("id", conversationId);
   if (error) console.error("[db] falha ao atualizar qualificação:", error.message);
-}
-
-export async function markHandoffRequested(conversationId: string) {
-  const db = supabaseServer();
-  const { error } = await db
-    .from("conversations")
-    .update({ wants_human: true, status: "handoff_requested", updated_at: new Date().toISOString() })
-    .eq("id", conversationId);
-  if (error) throw new Error(`Falha ao marcar handoff: ${error.message}`);
 }
 
 // --- Agentes ---------------------------------------------------------------

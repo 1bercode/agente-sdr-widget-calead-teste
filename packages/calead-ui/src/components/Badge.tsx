@@ -8,11 +8,11 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-white/[0.06] border border-white/10 text-white/80",
-  success: "bg-emerald-400/10 border border-emerald-400/25 text-emerald-200",
-  warning: "bg-white/[0.05] border border-white/10 text-white/80",
-  error: "bg-red-400/10 border border-red-400/25 text-red-200",
-  neutral: "bg-white/[0.03] border border-white/[0.09] text-white/45",
+  default: "bg-[#141B2E]/[0.05] border border-[#141B2E]/10 text-[#141B2E]/75",
+  success: "bg-emerald-500/10 border border-emerald-500/25 text-emerald-700",
+  warning: "bg-amber-400/10 border border-amber-400/25 text-amber-700",
+  error: "bg-red-500/10 border border-red-500/25 text-red-700",
+  neutral: "bg-[#141B2E]/[0.03] border border-[#141B2E]/[0.08] text-[#141B2E]/40",
 };
 
 export function Badge({ variant = "default", className, children, ...props }: BadgeProps) {

@@ -8,17 +8,17 @@ export interface AlertProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantClasses: Record<AlertVariant, string> = {
-  info: "bg-white/[0.05] border-white/[0.11] text-white/75",
-  warning: "bg-amber-400/10 border-amber-400/25 text-amber-100",
-  error: "bg-red-400/10 border-red-400/25 text-red-100",
-  success: "bg-emerald-400/[0.09] border-emerald-400/[0.22] text-emerald-100",
+  info: "bg-[#141B2E]/[0.04] border-[#141B2E]/[0.10] text-[#141B2E]/75",
+  warning: "bg-amber-400/10 border-amber-400/25 text-amber-800",
+  error: "bg-red-400/10 border-red-400/25 text-red-800",
+  success: "bg-emerald-400/[0.10] border-emerald-400/[0.25] text-emerald-800",
 };
 
 const dotClasses: Record<AlertVariant, string> = {
-  info: "bg-white/55",
-  warning: "bg-amber-300",
-  error: "bg-red-300",
-  success: "bg-emerald-400",
+  info: "bg-[#141B2E]/45",
+  warning: "bg-amber-500",
+  error: "bg-red-500",
+  success: "bg-emerald-500",
 };
 
 export function Alert({ variant = "info", className, children, ...props }: AlertProps) {

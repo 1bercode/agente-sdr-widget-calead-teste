@@ -99,14 +99,16 @@ export default async function AgentDetailPage({ params }: { params: { id: string
                 >
                   <div>
                     <span className="text-[13.5px] font-medium text-white/90">
-                      {c.qualification?.empresa_ou_papel || "Visitante"}
+                      {c.qualification?.produto_interesse || "Visitante"}
                     </span>
                     {c.context_summary && (
                       <p className="mt-0.5 text-xs text-white/42">{c.context_summary}</p>
                     )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    {c.wants_human && <Badge variant="success">handoff registrado</Badge>}
+                    {c.qualification?.estagio_compra === "pronto_para_comprar" && (
+                      <Badge variant="success">pronto pra comprar</Badge>
+                    )}
                     <span className="text-xs text-white/35">{c.status}</span>
                   </div>
                 </div>

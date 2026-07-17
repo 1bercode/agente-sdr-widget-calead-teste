@@ -169,6 +169,9 @@ export interface ChatComposerProps {
   placeholder?: string;
   disabled?: boolean;
   meetingCta?: ReactNode;
+  onMicClick?: () => void;
+  isRecording?: boolean;
+  isTranscribing?: boolean;
 }
 
 export function ChatComposer({
@@ -178,6 +181,9 @@ export function ChatComposer({
   placeholder = "Pergunte qualquer coisa...",
   disabled = false,
   meetingCta,
+  onMicClick,
+  isRecording = false,
+  isTranscribing = false,
 }: ChatComposerProps) {
   return (
     <div className="border-t border-white/10 px-3 py-3">
@@ -208,10 +214,14 @@ export function ChatComposer({
         </div>
         <button
           type="button"
-          disabled
-          title="Conversa por voz chega em breve"
-          aria-label="Voz (em breve)"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2F4F44] disabled:opacity-80"
+          onClick={onMicClick}
+          disabled={disabled || isTranscribing}
+          title={isRecording ? "Parar gravação" : "Falar em vez de digitar"}
+          aria-label={isRecording ? "Parar gravação" : "Falar em vez de digitar"}
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition disabled:opacity-50",
+            isRecording ? "bg-red-500/90 text-white animate-pulse" : "bg-[#2F4F44] text-white/90"
+          )}
         >
           <MicIcon />
         </button>
