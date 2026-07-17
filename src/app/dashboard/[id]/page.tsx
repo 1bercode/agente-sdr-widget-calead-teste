@@ -1,4 +1,5 @@
 import { getAgentById, listConversationsByAgent } from "@/lib/db";
+import { Badge, Card, CardTitle } from "@calead/ui";
 import CopySnippet from "@/components/CopySnippet";
 import RecrawlButton from "@/components/RecrawlButton";
 import Link from "next/link";
@@ -29,13 +30,13 @@ export default async function AgentDetailPage({ params }: { params: { id: string
         <p className="text-sm text-slate-500">Aparece pro visitante como &ldquo;{agent.company_name}&rdquo;</p>
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Snippet de embed</h2>
+      <Card>
+        <CardTitle className="mb-3">Snippet de embed</CardTitle>
         <CopySnippet agentId={agent.slug} />
-      </section>
+      </Card>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Base de conhecimento (site)</h2>
+      <Card>
+        <CardTitle className="mb-3">Base de conhecimento (site)</CardTitle>
         <p className="text-sm text-slate-500">
           Site: {agent.site_url || "—"} ·{" "}
           <span
@@ -59,17 +60,17 @@ export default async function AgentDetailPage({ params }: { params: { id: string
             </p>
           </details>
         )}
-      </section>
+      </Card>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Instruções específicas</h2>
+      <Card>
+        <CardTitle className="mb-3">Instruções específicas</CardTitle>
         <p className="whitespace-pre-wrap text-sm text-slate-600">
           {agent.custom_prompt || "Nenhuma instrução extra definida."}
         </p>
-      </section>
+      </Card>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Conversas recentes</h2>
+      <Card>
+        <CardTitle className="mb-3">Conversas recentes</CardTitle>
         {conversations.length === 0 ? (
           <p className="text-sm text-slate-400">Nenhuma conversa ainda. Testa o widget pra ver aparecer aqui.</p>
         ) : (
@@ -81,11 +82,7 @@ export default async function AgentDetailPage({ params }: { params: { id: string
                     {c.qualification?.empresa_ou_papel || "Visitante"}
                   </span>
                   <div className="flex items-center gap-2">
-                    {c.wants_human && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
-                        quer falar com humano
-                      </span>
-                    )}
+                    {c.wants_human && <Badge variant="warning">quer reunião</Badge>}
                     <span className="text-xs text-slate-400">{c.status}</span>
                   </div>
                 </div>
@@ -94,7 +91,7 @@ export default async function AgentDetailPage({ params }: { params: { id: string
             ))}
           </div>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

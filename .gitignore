@@ -8,3 +8,5 @@ npm-debug.log*
 .DS_Store
 *.pem
 *.key
+storybook-static
+packages/calead-ui/storybook-static

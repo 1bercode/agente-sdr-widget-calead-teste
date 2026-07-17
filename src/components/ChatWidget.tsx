@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  ChatBubble,
+  ChatComposer,
+  ChatFloatingBar,
+  ChatHeader,
+  ChatPanel,
+  ChatWidgetShell,
+} from "@calead/ui";
 import type { ChatMessage, WidgetConfig } from "@/lib/types";
 
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-// Id anônimo por sessão de navegador — não é PII, só evita criar uma
-// conversa nova a cada mensagem/reload da mesma aba.
 function getVisitorSessionId() {
   if (typeof window === "undefined") return null;
   const key = "calead_visitor_session_id";
@@ -22,6 +28,14 @@ function getVisitorSessionId() {
 
 const OPENING_MESSAGE = (companyName: string) =>
   `Oi! Sou o consultor comercial de IA da ${companyName}. Posso te explicar nossos serviços, entender o que você precisa e, se fizer sentido, marcar uma conversa com um especialista. Como posso te ajudar?`;
+
+function defaultSuggestions(companyName: string) {
+  return [
+    `O que a ${companyName} faz?`,
+    "Quanto custa um projeto?",
+    "Como funciona o processo?",
+  ];
+}
 
 type WidgetMode = "bar" | "panel";
 
@@ -43,6 +57,8 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
   const visitorSessionIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const suggestions = defaultSuggestions(companyName);
+
   useEffect(() => {
     visitorSessionIdRef.current = getVisitorSessionId();
   }, []);
@@ -51,10 +67,6 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isSending]);
 
-  // Avisa a página que embutiu o widget (via embed.js) pra ela redimensionar
-  // o container do iframe — barra fina quando recolhido, painel alto quando
-  // expandido. Isso é o que faz o "barra embaixo do site" funcionar de
-  // verdade: o iframe em si só ocupa o espaço que precisa a cada momento.
   useEffect(() => {
     window.parent.postMessage({ type: "calead:mode", mode }, "*");
   }, [mode]);
@@ -71,17 +83,17 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     setMode("bar");
   }
 
-  function hide() {
-    window.parent.postMessage({ type: "calead:hide" }, "*");
-  }
+  async function sendMessage(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed || isSending) return;
 
-  async function handleSend() {
-    const text = input.trim();
-    if (!text || isSending) return;
     if (mode === "bar") expand();
 
-    const nextHistory = [...messages, { id: uid(), role: "user" as const, content: text, createdAt: Date.now() }];
-    pushMessage("user", text);
+    const nextHistory = [
+      ...messages,
+      { id: uid(), role: "user" as const, content: trimmed, createdAt: Date.now() },
+    ];
+    pushMessage("user", trimmed);
     setInput("");
     setIsSending(true);
 
@@ -99,7 +111,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
       const data = await res.json();
       if (data.conversationId) conversationIdRef.current = data.conversationId;
       pushMessage("assistant", data.reply as string);
-    } catch (err) {
+    } catch {
       pushMessage(
         "assistant",
         "Ops, não consegui processar agora. Pode repetir? Me conta também o que você está buscando — quero te ajudar da melhor forma."
@@ -107,6 +119,15 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     } finally {
       setIsSending(false);
     }
+  }
+
+  function handleSend() {
+    void sendMessage(input);
+  }
+
+  function handleSuggestionSelect(text: string) {
+    setInput(text);
+    void sendMessage(text);
   }
 
   async function handleTalkToHuman() {
@@ -133,130 +154,59 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     }
   }
 
-  // --- Modo barra (recolhido) ----------------------------------------
   if (mode === "bar") {
     return (
-      <div className="flex h-full w-full items-center gap-2 border-t border-slate-200 bg-white px-3 shadow-[0_-4px_16px_rgba(15,23,42,0.08)] sm:px-4">
-        <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-emerald-400" aria-hidden />
-        <button
-          onClick={expand}
-          className="flex-1 truncate text-left text-sm text-slate-500 hover:text-slate-700"
-        >
-          Pergunte sobre a {companyName} · consultor comercial IA
-        </button>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
+      <ChatWidgetShell>
+        <ChatFloatingBar
+          placeholder="Pergunte qualquer coisa..."
+          inputValue={input}
+          onInputChange={setInput}
           onFocus={expand}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Digite aqui..."
-          className="hidden flex-1 rounded-full border border-slate-200 px-4 py-2 text-sm outline-none focus:border-calead-accent sm:block"
+          onSubmit={handleSend}
+          suggestions={suggestions}
+          onSuggestionSelect={handleSuggestionSelect}
+          disabled={isSending}
         />
-        <button
-          disabled
-          title="Conversa por voz chega em breve"
-          aria-label="Voz (em breve)"
-          className="shrink-0 rounded-full p-2 text-slate-300"
-        >
-          🎙️
-        </button>
-        <button
-          onClick={hide}
-          aria-label="Esconder"
-          className="shrink-0 rounded-full p-2 text-slate-300 hover:text-slate-500"
-        >
-          ✕
-        </button>
-      </div>
+      </ChatWidgetShell>
     );
   }
 
-  // --- Modo painel (expandido) ----------------------------------------
   return (
-    <div className="flex h-full w-full flex-col bg-white">
-      {/* Header — transparência total: deixa claro que é IA */}
-      <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-calead-bg px-4 py-3 text-white">
-        <div>
-          <p className="text-sm font-semibold">{companyName}</p>
-          <p className="flex items-center gap-1 text-xs text-slate-300">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Consultor comercial · assistente de IA
-          </p>
-        </div>
-        <button
-          onClick={collapse}
-          aria-label="Recolher"
-          className="rounded-full p-1 text-slate-300 hover:bg-white/10 hover:text-white"
-        >
-          ▾
-        </button>
-      </div>
+    <ChatWidgetShell className="h-full">
+      <ChatPanel className="flex h-full min-h-0 w-full max-w-[680px] flex-col">
+        <ChatHeader companyName={companyName} onCollapse={collapse} />
 
-      {/* Mensagens */}
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={
-              m.role === "user"
-                ? "flex justify-end"
-                : m.role === "system"
-                ? "flex justify-center"
-                : "flex justify-start"
-            }
-          >
-            <div
-              className={
-                m.role === "user"
-                  ? "max-w-[80%] rounded-2xl rounded-br-sm bg-calead-accent px-3 py-2 text-sm text-white"
-                  : m.role === "system"
-                  ? "max-w-[90%] rounded-xl bg-amber-50 px-3 py-2 text-center text-xs text-amber-800"
-                  : "max-w-[80%] rounded-2xl rounded-bl-sm bg-calead-accentSoft px-3 py-2 text-sm text-slate-800"
-              }
+        <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          {messages.map((m) => (
+            <ChatBubble
+              key={m.id}
+              role={m.role === "system" ? "system" : m.role === "user" ? "user" : "assistant"}
             >
               {m.content}
-            </div>
-          </div>
-        ))}
-        {isSending && (
-          <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-calead-accentSoft px-3 py-2 text-sm text-slate-500">
-              digitando...
-            </div>
-          </div>
-        )}
-      </div>
+            </ChatBubble>
+          ))}
+          {isSending && <ChatBubble role="typing">digitando...</ChatBubble>}
+        </div>
 
-      {/* CTA secundário — reunião com especialista */}
-      <div className="border-t border-slate-100 px-4 py-2">
-        <button
-          onClick={handleTalkToHuman}
-          disabled={handoffRequested}
-          className="w-full text-center text-xs text-slate-500 hover:text-calead-accent disabled:cursor-default disabled:opacity-60"
-        >
-          {handoffRequested ? "Interesse em reunião registrado ✓" : "Prefere agendar uma reunião com um especialista?"}
-        </button>
-      </div>
-
-      {/* Input */}
-      <div className="flex items-center gap-2 border-t border-slate-100 px-3 py-3">
-        <input
+        <ChatComposer
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Escreva sua mensagem..."
+          onChange={setInput}
+          onSend={handleSend}
           disabled={isSending}
-          autoFocus
-          className="flex-1 rounded-full border border-slate-200 px-4 py-2 text-sm outline-none focus:border-calead-accent disabled:bg-slate-50"
+          meetingCta={
+            <button
+              type="button"
+              onClick={handleTalkToHuman}
+              disabled={handoffRequested}
+              className="w-full text-center text-xs text-white/45 transition hover:text-white/75 disabled:cursor-default disabled:opacity-50"
+            >
+              {handoffRequested
+                ? "Interesse em reunião registrado ✓"
+                : "Prefere agendar uma reunião com um especialista?"}
+            </button>
+          }
         />
-        <button
-          onClick={handleSend}
-          disabled={isSending}
-          className="rounded-full bg-calead-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-        >
-          Enviar
-        </button>
-      </div>
-    </div>
+      </ChatPanel>
+    </ChatWidgetShell>
   );
 }

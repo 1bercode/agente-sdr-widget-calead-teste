@@ -10,3 +10,8 @@ body {
 body {
   background: transparent;
 }
+
+/* Preview local do widget em /test-site */
+html:has([data-calead-preview]) {
+  background: #f0f0f0;
+}

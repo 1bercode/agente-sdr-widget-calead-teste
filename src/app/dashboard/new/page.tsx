@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button, Card, CardTitle, Input, Textarea } from "@calead/ui";
 
 export default function NewAgentPage() {
   const router = useRouter();
@@ -37,69 +38,67 @@ export default function NewAgentPage() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-slate-900">Novo agente</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Nome interno</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            placeholder="Ex: Widget site principal"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-calead-accent"
-          />
-          <p className="mt-1 text-xs text-slate-400">Só aparece aqui no dashboard, não pro visitante.</p>
-        </div>
+      <Card>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <CardTitle>Novo agente</CardTitle>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Nome da empresa (mostrado no widget)</label>
-          <input
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            required
-            placeholder="Ex: Acme Inc"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-calead-accent"
-          />
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Nome interno</label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Ex: Widget site principal"
+            />
+            <p className="mt-1 text-xs text-slate-400">Só aparece aqui no dashboard, não pro visitante.</p>
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Site da empresa</label>
-          <input
-            value={siteUrl}
-            onChange={(e) => setSiteUrl(e.target.value)}
-            placeholder="https://empresa.com"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-calead-accent"
-          />
-          <p className="mt-1 text-xs text-slate-400">
-            A gente lê a home desse site na hora de criar o agente, pra ele já responder dúvidas sobre o produto.
-          </p>
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              Nome da empresa (mostrado no widget)
+            </label>
+            <Input
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              required
+              placeholder="Ex: Acme Inc"
+            />
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Como esse agente deve agir (opcional)
-          </label>
-          <textarea
-            value={customPrompt}
-            onChange={(e) => setCustomPrompt(e.target.value)}
-            rows={5}
-            placeholder="Ex: Somos uma consultoria B2B. Foque em entender o tamanho da empresa e a dor principal antes de oferecer reunião. Fale de forma direta, sem enrolação."
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-calead-accent"
-          />
-          <p className="mt-1 text-xs text-slate-400">
-            O agente atua como SDR consultivo: qualifica, responde dúvidas e convida para reunião no momento certo.
-          </p>
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Site da empresa</label>
+            <Input
+              value={siteUrl}
+              onChange={(e) => setSiteUrl(e.target.value)}
+              placeholder="https://empresa.com"
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              A gente lê a home desse site na hora de criar o agente, pra ele já responder dúvidas sobre o produto.
+            </p>
+          </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              Como esse agente deve agir (opcional)
+            </label>
+            <Textarea
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              rows={5}
+              placeholder="Ex: Somos uma consultoria B2B. Foque em entender o tamanho da empresa e a dor principal antes de oferecer reunião."
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              O agente atua como SDR consultivo: qualifica, responde dúvidas e convida para reunião no momento certo.
+            </p>
+          </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-calead-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? "Criando e lendo o site..." : "Criar agente"}
-        </button>
-      </form>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <Button type="submit" disabled={loading}>
+            {loading ? "Criando e lendo o site..." : "Criar agente"}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

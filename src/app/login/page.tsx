@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Button, Card, Input } from "@calead/ui";
 
 function LoginForm() {
   const router = useRouter();
@@ -34,30 +35,24 @@ function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm"
-      >
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900">Calead</h1>
-          <p className="text-sm text-slate-500">Entrar no dashboard</p>
-        </div>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Senha"
-          autoFocus
-          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-calead-accent"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-calead-accent px-3 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? "Entrando..." : "Entrar"}
-        </button>
+      <form onSubmit={handleSubmit} className="w-full max-w-sm">
+        <Card padding="lg" className="space-y-4">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900">Calead</h1>
+            <p className="text-sm text-slate-500">Entrar no dashboard</p>
+          </div>
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Senha"
+            autoFocus
+          />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <Button type="submit" disabled={loading} fullWidth>
+            {loading ? "Entrando..." : "Entrar"}
+          </Button>
+        </Card>
       </form>
     </div>
   );

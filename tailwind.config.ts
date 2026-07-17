@@ -1,20 +1,15 @@
 import type { Config } from "tailwindcss";
+import caleadPreset from "./packages/calead-ui/tailwind.preset";
 
 const config: Config = {
   content: [
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./packages/calead-ui/src/**/*.{js,ts,jsx,tsx}",
   ],
+  presets: [caleadPreset as Config],
   theme: {
-    extend: {
-      colors: {
-        calead: {
-          bg: "#0F172A",
-          accent: "#4F46E5",
-          accentSoft: "#EEF2FF",
-        },
-      },
-    },
+    extend: {},
   },
   plugins: [],
 };

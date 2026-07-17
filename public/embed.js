@@ -1,9 +1,6 @@
 (function () {
   "use strict";
 
-  // Descobre a URL base a partir do próprio <script src="...">, pra
-  // funcionar embutido em qualquer site, apontando de volta pro servidor
-  // do widget.
   var currentScript = document.currentScript;
   var scriptUrl = new URL(currentScript.src);
   var baseUrl = scriptUrl.origin;
@@ -14,8 +11,9 @@
     return;
   }
 
-  var BAR_HEIGHT = "56px";
-  var PANEL_HEIGHT_DESKTOP = "min(600px, 80vh)";
+  var COLLAPSED_HEIGHT = "148px";
+  var PANEL_HEIGHT_DESKTOP = "min(560px, 80vh)";
+  var WIDGET_WIDTH = "min(680px, calc(100vw - 32px))";
 
   function isMobile() {
     return window.matchMedia("(max-width: 480px)").matches;
@@ -31,15 +29,16 @@
     container.id = "calead-container";
     Object.assign(container.style, {
       position: "fixed",
-      left: "0",
-      right: "0",
-      bottom: "0",
-      width: "100%",
-      height: BAR_HEIGHT,
+      left: "50%",
+      bottom: "20px",
+      transform: "translateX(-50%)",
+      width: WIDGET_WIDTH,
+      height: COLLAPSED_HEIGHT,
       zIndex: "2147483000",
-      boxShadow: "0 -2px 12px rgba(15, 23, 42, 0.06)",
-      transition: "height 160ms ease",
-      background: "#ffffff",
+      background: "transparent",
+      boxShadow: "none",
+      transition: "height 200ms ease, width 200ms ease",
+      pointerEvents: "none",
     });
 
     var iframe = document.createElement("iframe");
@@ -51,8 +50,11 @@
       height: "100%",
       border: "none",
       display: "block",
-      colorScheme: "light",
+      background: "transparent",
+      colorScheme: "dark",
+      pointerEvents: "auto",
     });
+    iframe.setAttribute("allowtransparency", "true");
 
     container.appendChild(iframe);
     document.body.appendChild(container);
@@ -62,10 +64,11 @@
   function setMode(container, mode) {
     var expanded = mode === "panel";
     var mobile = isMobile();
-    container.style.height = expanded ? (mobile ? "100%" : PANEL_HEIGHT_DESKTOP) : BAR_HEIGHT;
-    container.style.boxShadow = expanded
-      ? "0 -16px 48px rgba(15, 23, 42, 0.22)"
-      : "0 -2px 12px rgba(15, 23, 42, 0.06)";
+    container.style.height = expanded ? (mobile ? "90vh" : PANEL_HEIGHT_DESKTOP) : COLLAPSED_HEIGHT;
+    container.style.width = expanded && mobile ? "100vw" : WIDGET_WIDTH;
+    container.style.bottom = expanded && mobile ? "0" : "20px";
+    container.style.left = expanded && mobile ? "0" : "50%";
+    container.style.transform = expanded && mobile ? "none" : "translateX(-50%)";
   }
 
   function init() {
