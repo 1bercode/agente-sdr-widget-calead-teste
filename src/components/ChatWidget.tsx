@@ -7,7 +7,6 @@ import {
   ChatFloatingBar,
   ChatHeader,
   ChatPanel,
-  ChatWidgetShell,
 } from "@calead/ui";
 import TypewriterBubble from "@/components/TypewriterBubble";
 import type { ChatMessage, WidgetConfig } from "@/lib/types";
@@ -100,7 +99,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
   }, [messages, isSending, isTypingReply, scrollToBottom]);
 
   useEffect(() => {
-    window.parent.postMessage({ type: "calead:mode", mode }, "*");
+    window.parent.postMessage({ type: "calead:chrome", mode }, "*");
   }, [mode]);
 
   function pushMessage(role: ChatMessage["role"], content: string, options?: { animate?: boolean }) {
@@ -198,23 +197,22 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     }
   }
 
+  // Modo barra: um único nó visual — sem shell/h-full intermediário.
   if (mode === "bar") {
     return (
-      <ChatWidgetShell className="h-full">
-        <ChatFloatingBar
-          suggestions={defaultSuggestions(companyName)}
-          inputValue={input}
-          onInputChange={setInput}
-          onSubmit={handleSend}
-          onSuggestionSelect={(text) => void sendMessage(text)}
-          disabled={isSending || isTypingReply}
-        />
-      </ChatWidgetShell>
+      <ChatFloatingBar
+        suggestions={defaultSuggestions(companyName)}
+        inputValue={input}
+        onInputChange={setInput}
+        onSubmit={handleSend}
+        onSuggestionSelect={(text) => void sendMessage(text)}
+        disabled={isSending || isTypingReply}
+      />
     );
   }
 
   return (
-    <ChatWidgetShell className="h-full min-h-[560px]">
+    <div className="flex h-full w-full items-end justify-center bg-transparent">
       <ChatPanel className="flex h-full min-h-0 w-full max-w-[680px] flex-col">
         <ChatHeader companyName={companyName} onCollapse={collapse} />
 
@@ -270,6 +268,6 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
           }
         />
       </ChatPanel>
-    </ChatWidgetShell>
+    </div>
   );
 }

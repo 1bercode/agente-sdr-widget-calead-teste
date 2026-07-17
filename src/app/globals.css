@@ -9,7 +9,7 @@ body {
 
 body {
   background: transparent;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
 }
 
 /* Widget embed: iframe precisa de html + body transparentes */

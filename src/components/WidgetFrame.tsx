@@ -2,54 +2,23 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 
+/**
+ * Bridge mínimo do iframe: transparência no first paint + handshake ready.
+ * A geometria do chrome fica no host (embed.js) — sem ResizeObserver.
+ */
 export default function WidgetFrame({ children }: { children: ReactNode }) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const readySent = useRef(false);
 
   useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    html.style.background = "transparent";
-    html.style.backgroundColor = "transparent";
-    body.style.background = "transparent";
-    body.style.backgroundColor = "transparent";
-    html.style.colorScheme = "dark";
-  }, []);
+    if (readySent.current) return;
+    readySent.current = true;
 
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    function contentEl(): HTMLElement {
-      // Shell (filho) costuma ser h-full; o conteúdo real (barra/painel)
-      // é o neto — é ele que muda de altura no hover das chips.
-      const shell = root!.firstElementChild as HTMLElement | null;
-      const inner = shell?.firstElementChild as HTMLElement | null;
-      return inner ?? shell ?? root!;
-    }
-
-    function publishHeight() {
-      const height = Math.ceil(contentEl().getBoundingClientRect().height);
-      window.parent.postMessage({ type: "calead:height", height }, "*");
-    }
-
-    publishHeight();
-
-    const observer = new ResizeObserver(publishHeight);
-    observer.observe(root);
-
-    const shell = root.firstElementChild;
-    if (shell instanceof HTMLElement) {
-      observer.observe(shell);
-      const inner = shell.firstElementChild;
-      if (inner instanceof HTMLElement) observer.observe(inner);
-    }
-
-    window.addEventListener("resize", publishHeight);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", publishHeight);
-    };
+    // Dois rAFs: espera layout/paint do React antes de revelar no host.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.parent.postMessage({ type: "calead:ready" }, "*");
+      });
+    });
   }, []);
 
   return (
@@ -58,14 +27,18 @@ export default function WidgetFrame({ children }: { children: ReactNode }) {
         dangerouslySetInnerHTML={{
           __html: `
             html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              height: 100% !important;
+              overflow: hidden !important;
               background: transparent !important;
               background-color: transparent !important;
+              color-scheme: dark;
             }
           `,
         }}
       />
       <div
-        ref={rootRef}
         id="calead-widget-root"
         data-calead-widget
         className="h-full w-full bg-transparent"
