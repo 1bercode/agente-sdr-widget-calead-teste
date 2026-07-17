@@ -33,7 +33,11 @@ export async function POST(req: NextRequest) {
     // client, pra não dar pra ninguém spoofar o comportamento de outro
     // agente.
     const agent = await getAgentBySlug(agentId);
-    const companyName = agent?.company_name || "nossa empresa";
+    if (!agent) {
+      return NextResponse.json({ error: "Agente não encontrado" }, { status: 404 });
+    }
+
+    const companyName = agent.company_name;
 
     let conversation: { id: string } | null = null;
     try {
@@ -54,8 +58,8 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = buildSystemPrompt({
       companyName,
-      customPrompt: agent?.custom_prompt,
-      siteKnowledge: agent?.site_knowledge,
+      customPrompt: agent.custom_prompt,
+      siteKnowledge: agent.site_knowledge,
     });
     const reply = await generateReply({ systemPrompt, history: messages });
 

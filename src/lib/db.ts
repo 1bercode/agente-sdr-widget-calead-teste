@@ -204,10 +204,23 @@ export async function deleteAgent(id: string): Promise<boolean> {
   const agent = await getAgentById(id);
   if (!agent) return false;
 
-  const { error: convError } = await db.from("conversations").delete().eq("agent_id", agent.slug);
+  const { data: conversations, error: listConvError } = await db
+    .from("conversations")
+    .select("id")
+    .in("agent_id", [agent.slug, agent.id]);
+  if (listConvError) throw new Error(`Falha ao listar conversas: ${listConvError.message}`);
+
+  const conversationIds = (conversations ?? []).map((c) => c.id);
+  if (conversationIds.length > 0) {
+    const { error: msgError } = await db.from("messages").delete().in("conversation_id", conversationIds);
+    if (msgError) throw new Error(`Falha ao apagar mensagens: ${msgError.message}`);
+  }
+
+  const { error: convError } = await db.from("conversations").delete().in("agent_id", [agent.slug, agent.id]);
   if (convError) throw new Error(`Falha ao apagar conversas: ${convError.message}`);
 
-  const { error } = await db.from("agents").delete().eq("id", id);
+  const { data: deleted, error } = await db.from("agents").delete().eq("id", id).select("id");
   if (error) throw new Error(`Falha ao apagar agente: ${error.message}`);
+  if (!deleted?.length) throw new Error("Agente não foi removido — verifique a service role do Supabase");
   return true;
 }

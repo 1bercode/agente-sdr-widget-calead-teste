@@ -108,7 +108,16 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
           visitorSessionId: visitorSessionIdRef.current,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        pushMessage(
+          "assistant",
+          data.error === "Agente não encontrado"
+            ? "Este assistente não está mais disponível. Confere com quem te enviou o link."
+            : "Ops, não consegui processar agora. Pode repetir? Me conta também o que você está buscando — quero te ajudar da melhor forma."
+        );
+        return;
+      }
       if (data.conversationId) conversationIdRef.current = data.conversationId;
       pushMessage("assistant", data.reply as string);
     } catch {

@@ -5,6 +5,8 @@ import DeleteAgentButton from "@/components/DeleteAgentButton";
 import RecrawlButton from "@/components/RecrawlButton";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function AgentDetailPage({ params }: { params: { id: string } }) {
   const agent = await getAgentById(params.id);
 
