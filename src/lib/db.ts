@@ -198,3 +198,16 @@ export async function updateAgentKnowledge(
     .eq("id", id);
   if (error) console.error("[db] falha ao atualizar conhecimento do agente:", error.message);
 }
+
+export async function deleteAgent(id: string): Promise<boolean> {
+  const db = supabaseServer();
+  const agent = await getAgentById(id);
+  if (!agent) return false;
+
+  const { error: convError } = await db.from("conversations").delete().eq("agent_id", agent.slug);
+  if (convError) throw new Error(`Falha ao apagar conversas: ${convError.message}`);
+
+  const { error } = await db.from("agents").delete().eq("id", id);
+  if (error) throw new Error(`Falha ao apagar agente: ${error.message}`);
+  return true;
+}

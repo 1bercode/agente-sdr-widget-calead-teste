@@ -1,6 +1,7 @@
 import { getAgentById, listConversationsByAgent } from "@/lib/db";
 import { Badge, Card, CardTitle, StatusDot } from "@calead/ui";
 import CopySnippet from "@/components/CopySnippet";
+import DeleteAgentButton from "@/components/DeleteAgentButton";
 import RecrawlButton from "@/components/RecrawlButton";
 import Link from "next/link";
 
@@ -112,6 +113,16 @@ export default async function AgentDetailPage({ params }: { params: { id: string
           )}
         </Card>
       </div>
+
+      <Card className="border-red-500/20">
+        <CardTitle>Zona de perigo</CardTitle>
+        <p className="mt-2 text-[13px] text-white/42">
+          Apagar remove o agente, todas as conversas e invalida o snippet de embed.
+        </p>
+        <div className="mt-3">
+          <DeleteAgentButton agentId={agent.id} agentName={agent.name} />
+        </div>
+      </Card>
     </div>
   );
 }

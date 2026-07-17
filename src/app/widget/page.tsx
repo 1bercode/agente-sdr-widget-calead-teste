@@ -14,7 +14,7 @@ export default async function WidgetPage({
 
   if (!agentId) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-white p-4 text-center text-sm text-slate-500">
+      <div className="flex h-screen w-screen items-center justify-center bg-transparent p-4 text-center text-sm text-white/50">
         Este widget precisa de um agentId no snippet de embed.
       </div>
     );
@@ -24,7 +24,7 @@ export default async function WidgetPage({
 
   if (!agent) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-white p-4 text-center text-sm text-slate-500">
+      <div className="flex h-screen w-screen items-center justify-center bg-transparent p-4 text-center text-sm text-white/50">
         Agente não encontrado. Confere se o snippet de embed está com o
         agentId certo.
       </div>

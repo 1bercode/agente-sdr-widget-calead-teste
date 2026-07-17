@@ -12,6 +12,12 @@ body {
   font-family: "Inter", system-ui, sans-serif;
 }
 
+/* Widget embed: iframe precisa de html + body transparentes */
+html:has([data-calead-widget]),
+html:has([data-calead-widget]) body {
+  background: transparent !important;
+}
+
 /* Preview local do widget em /test-site */
 html:has([data-calead-preview]) {
   background: #f0f0f0;

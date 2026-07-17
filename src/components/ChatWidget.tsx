@@ -156,7 +156,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
 
   if (mode === "bar") {
     return (
-      <ChatWidgetShell>
+      <ChatWidgetShell className="h-full">
         <ChatFloatingBar
           placeholder="Pergunte qualquer coisa..."
           inputValue={input}

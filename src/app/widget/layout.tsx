@@ -1,3 +1,7 @@
 export default function WidgetLayout({ children }: { children: React.ReactNode }) {
-  return <div className="h-screen overflow-hidden bg-transparent">{children}</div>;
+  return (
+    <div data-calead-widget className="h-screen overflow-hidden bg-transparent">
+      {children}
+    </div>
+  );
 }

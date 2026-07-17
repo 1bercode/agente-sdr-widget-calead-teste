@@ -55,6 +55,8 @@
       pointerEvents: "auto",
     });
     iframe.setAttribute("allowtransparency", "true");
+    iframe.setAttribute("scrolling", "no");
+    iframe.setAttribute("frameborder", "0");
 
     container.appendChild(iframe);
     document.body.appendChild(container);
