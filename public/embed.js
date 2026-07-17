@@ -72,6 +72,7 @@
     var container = createContainer();
 
     window.addEventListener("message", function (event) {
+      if (event.origin !== baseUrl) return;
       if (!event.data || typeof event.data !== "object") return;
       if (event.data.type === "calead:mode") {
         setMode(container, event.data.mode);

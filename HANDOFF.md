@@ -41,20 +41,18 @@ free tier) como LLM.
 - Migrations `supabase/migrations/0001_init.sql` (conversations + messages)
   e `0002_agents.sql` (agents) **já rodadas** no projeto Supabase
   `AGENTE-SDR-CALEAD-TESTE` (org AIMEI).
-- `.env.local` já tem todas as chaves preenchidas (Supabase, Gemini,
-  DASHBOARD_PASSWORD=`calead-demo-2026`).
+- `.env.local` com Supabase, Gemini e variáveis do dashboard (`DASHBOARD_PASSWORD`,
+  `DASHBOARD_SESSION_SECRET`) — **nunca commitar**; copiar de `.env.example`.
 
-## Arquivo obsoleto — pode apagar
+## Arquivo obsoleto — já removido
 
-`middleware.ts` na raiz do projeto não faz nada (o Next.js só lê middleware
-de `src/middleware.ts`, que é onde está a versão real). Ficou órfão porque
-a sandbox onde eu trabalho não conseguiu apagá-lo por um bug de permissão
-do mount. Pode deletar sem medo.
+O `middleware.ts` na raiz do projeto era órfão (o Next.js só lê
+`src/middleware.ts`). Já foi apagado.
 
 ## O que fazer agora
 
 1. **Testar local primeiro** (se ainda não testou): `npm install && npm run dev`,
-   abrir `/login` (senha `calead-demo-2026`), criar um agente em
+   abrir `/login` (senha do `DASHBOARD_PASSWORD` no `.env.local`), criar um agente em
    `/dashboard/new`, testar em `/test-site?agentId=SEU_ID`.
 2. **Commitar e subir pro GitHub**:
    ```bash
@@ -64,9 +62,9 @@ do mount. Pode deletar sem medo.
    ```
    (repositório: `git@github.com:1bercode/agente-sdr-widget-calead-teste.git`)
 3. **Deploy na Vercel**: importar o repositório em vercel.com → Add New →
-   Project. Na aba de variáveis de ambiente, colar o conteúdo inteiro do
-   `.env.local` (a Vercel aceita colar em formato `.env` de uma vez). Não
-   precisa mudar nada no build, é Next.js padrão.
+   Project. Na aba de variáveis de ambiente, preencher cada variável de
+   `.env.example` (não colar `.env.local` no git). Não precisa mudar nada no
+   build, é Next.js padrão.
 4. Depois do deploy, testar `/login` e `/dashboard/new` na URL da Vercel, e
    trocar o snippet de embed pra apontar pra esse domínio real (em vez de
    `localhost`) antes de colar no site de produção.

@@ -24,8 +24,8 @@ npm run dev
 
 Fluxo pra testar tudo de ponta a ponta:
 
-1. Abre `http://localhost:3000/login` e entra com a senha em
-   `DASHBOARD_PASSWORD` no `.env.local` (hoje: `calead-demo-2026`).
+1. Abre `http://localhost:3000/login` e entra com a senha definida em
+   `DASHBOARD_PASSWORD` no seu `.env.local`.
 2. Em `/dashboard/new`, cria um agente: nome interno, nome da empresa, site
    (opcional, mas é o que alimenta o conhecimento) e um prompt customizado
    (opcional).
@@ -122,15 +122,29 @@ fluxo do "Como rodar localmente" acima.
 
 ## Variáveis de ambiente novas neste passo
 
-Já preenchidas em `.env.local`:
+Copie de `.env.example` para `.env.local` e preencha com valores seus:
 
 ```
-DASHBOARD_PASSWORD=calead-demo-2026
-DASHBOARD_SESSION_SECRET=de4599bfa371270288f2b00df8117cb71688e4b111c81fc6
+DASHBOARD_PASSWORD=your-password-here
+DASHBOARD_SESSION_SECRET=your-secret-here
 ```
 
-Troca `DASHBOARD_PASSWORD` por algo só seu quando quiser — não precisa ser
-sofisticado, é só a chave da porta da demo.
+Gere um `DASHBOARD_SESSION_SECRET` longo e aleatório (ex.: `openssl rand -hex 32`).
+Não commite o `.env.local` — ele já está no `.gitignore`.
+
+## Segurança (checklist básico)
+
+- **Nunca commitar secrets** — só placeholders em docs; valores reais ficam em
+  `.env.local` / variáveis da Vercel.
+- **Rotacionar credenciais** se algum secret já apareceu em commit público
+  (gere novo `DASHBOARD_SESSION_SECRET` e faça login de novo).
+- **Dashboard protegido** — `/dashboard/*` e `/api/agents` exigem cookie de
+  sessão assinado (HMAC); o valor do secret não vai mais cru no cookie.
+- **Crawler com anti-SSRF** — bloqueia URLs que resolvem pra IP privado/local.
+- **Supabase** — RLS ligado sem policies; só a `service_role` nas API routes
+  do servidor acessa os dados.
+- **Widget público** — `/api/chat` e `/api/handoff` ficam abertos de propósito
+  (o embed precisa); o `agentId` vem do banco, nunca do client.
 
 ## Princípios Human First (lembrete pro time)
 

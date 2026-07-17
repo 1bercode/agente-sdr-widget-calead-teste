@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { assertSafePublicUrl } from "@/lib/safe-url";
 
 // RAG simplificado v1: em vez de indexar o site inteiro com embeddings e
 // busca vetorial, a gente busca a home, tira o HTML, e joga o texto puro
@@ -16,10 +17,8 @@ export interface CrawlResult {
 }
 
 export async function fetchSiteKnowledge(siteUrl: string): Promise<CrawlResult> {
-  let url = siteUrl.trim();
-  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-
   try {
+    const url = await assertSafePublicUrl(siteUrl);
     const res = await fetch(url, {
       headers: { "User-Agent": "CaleadBot/0.1 (+https://calead.app)" },
       signal: AbortSignal.timeout(10000),

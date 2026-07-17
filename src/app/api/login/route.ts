@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createSessionCookieValue, verifyPassword } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const { password } = await req.json();
@@ -13,12 +14,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (password !== expectedPassword) {
+  if (!verifyPassword(String(password ?? ""), expectedPassword)) {
     return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set("calead_session", sessionSecret, {
+  res.cookies.set("calead_session", await createSessionCookieValue(sessionSecret), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
