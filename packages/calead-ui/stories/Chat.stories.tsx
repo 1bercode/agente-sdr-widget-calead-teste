@@ -21,20 +21,10 @@ export default meta;
 
 export const FloatingBar: StoryObj = {
   render: function Render() {
-    const [input, setInput] = useState("");
     return (
-      <div className="relative h-[420px] w-full bg-[#f0f0f0]">
-        <ChatWidgetShell className="absolute inset-x-0 bottom-0">
-          <ChatFloatingBar
-            inputValue={input}
-            onInputChange={setInput}
-            suggestions={[
-              "O que a nomo studio faz?",
-              "Quanto custa um projeto?",
-              "Como funciona o processo?",
-            ]}
-            onSuggestionSelect={setInput}
-          />
+      <div className="relative h-[120px] w-full bg-[#3b82f6]">
+        <ChatWidgetShell className="absolute inset-x-0 bottom-4 px-4">
+          <ChatFloatingBar onActivate={() => undefined} />
         </ChatWidgetShell>
       </div>
     );

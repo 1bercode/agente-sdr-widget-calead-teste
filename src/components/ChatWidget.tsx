@@ -15,6 +15,11 @@ function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+const OPENING_MESSAGE = (companyName: string) =>
+  `Oi! Sou o consultor comercial de IA da ${companyName}. Posso te explicar nossos serviços, entender o que você precisa e, se fizer sentido, marcar uma conversa com um especialista. Como posso te ajudar?`;
+
+type WidgetMode = "bar" | "panel";
+
 function getVisitorSessionId() {
   if (typeof window === "undefined") return null;
   const key = "calead_visitor_session_id";
@@ -25,19 +30,6 @@ function getVisitorSessionId() {
   }
   return id;
 }
-
-const OPENING_MESSAGE = (companyName: string) =>
-  `Oi! Sou o consultor comercial de IA da ${companyName}. Posso te explicar nossos serviços, entender o que você precisa e, se fizer sentido, marcar uma conversa com um especialista. Como posso te ajudar?`;
-
-function defaultSuggestions(companyName: string) {
-  return [
-    `O que a ${companyName} faz?`,
-    "Quanto custa um projeto?",
-    "Como funciona o processo?",
-  ];
-}
-
-type WidgetMode = "bar" | "panel";
 
 export default function ChatWidget({ config }: { config: WidgetConfig }) {
   const { companyName, agentId } = config;
@@ -56,8 +48,6 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
   const conversationIdRef = useRef<string | null>(null);
   const visitorSessionIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const suggestions = defaultSuggestions(companyName);
 
   useEffect(() => {
     visitorSessionIdRef.current = getVisitorSessionId();
@@ -134,11 +124,6 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     void sendMessage(input);
   }
 
-  function handleSuggestionSelect(text: string) {
-    setInput(text);
-    void sendMessage(text);
-  }
-
   async function handleTalkToHuman() {
     if (handoffRequested) return;
     setHandoffRequested(true);
@@ -166,16 +151,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
   if (mode === "bar") {
     return (
       <ChatWidgetShell>
-        <ChatFloatingBar
-          placeholder="Pergunte qualquer coisa..."
-          inputValue={input}
-          onInputChange={setInput}
-          onFocus={expand}
-          onSubmit={handleSend}
-          suggestions={suggestions}
-          onSuggestionSelect={handleSuggestionSelect}
-          disabled={isSending}
-        />
+        <ChatFloatingBar onActivate={expand} disabled={isSending} />
       </ChatWidgetShell>
     );
   }

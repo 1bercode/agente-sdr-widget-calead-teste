@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { cn } from "../lib/cn";
+import { ChatFloatingBar } from "./ChatFloatingBar";
 
-const glassSurface =
-  "border border-white/10 bg-[rgba(24,24,28,0.88)] shadow-glass backdrop-blur-[16px]";
+export { ChatFloatingBar } from "./ChatFloatingBar";
+export type { ChatFloatingBarProps } from "./ChatFloatingBar";
+
 const glassChip =
   "border border-white/10 bg-[rgba(38,38,44,0.78)] backdrop-blur-md transition hover:border-white/20 hover:bg-[rgba(48,48,54,0.85)]";
 
@@ -23,10 +25,10 @@ function ArrowUpIcon() {
 function MicIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="9" y="3" width="6" height="11" rx="3" stroke="white" strokeWidth="1.5" />
+      <rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.5" />
       <path
         d="M5 11a7 7 0 0014 0M12 18v3"
-        stroke="white"
+        stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
@@ -60,76 +62,6 @@ export function ChatSuggestionChips({ suggestions, onSelect }: ChatSuggestionChi
 }
 
 ChatSuggestionChips.displayName = "CaleadChatSuggestionChips";
-
-export interface ChatFloatingBarProps {
-  placeholder?: string;
-  inputValue?: string;
-  onInputChange?: (value: string) => void;
-  onSubmit?: () => void;
-  onFocus?: () => void;
-  suggestions?: string[];
-  onSuggestionSelect?: (text: string) => void;
-  disabled?: boolean;
-}
-
-export function ChatFloatingBar({
-  placeholder = "Pergunte qualquer coisa...",
-  inputValue = "",
-  onInputChange,
-  onSubmit,
-  onFocus,
-  suggestions = [],
-  onSuggestionSelect,
-  disabled = false,
-}: ChatFloatingBarProps) {
-  return (
-    <div className="flex w-full max-w-[680px] flex-col gap-3">
-      {suggestions.length > 0 && onSuggestionSelect && (
-        <ChatSuggestionChips suggestions={suggestions} onSelect={onSuggestionSelect} />
-      )}
-
-      <div className="flex items-center gap-2">
-        <div
-          className={cn(
-            glassSurface,
-            "flex min-w-0 flex-1 items-center gap-2 rounded-full px-4 py-2.5"
-          )}
-        >
-          <input
-            value={inputValue}
-            onChange={(e) => onInputChange?.(e.target.value)}
-            onFocus={onFocus}
-            onKeyDown={(e) => e.key === "Enter" && onSubmit?.()}
-            placeholder={placeholder}
-            disabled={disabled}
-            className="min-w-0 flex-1 bg-transparent text-sm text-white/90 outline-none placeholder:text-white/40 disabled:opacity-50"
-          />
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={disabled || !inputValue.trim()}
-            aria-label="Enviar"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[#1a1a1c] transition hover:bg-white/90 disabled:opacity-40"
-          >
-            <ArrowUpIcon />
-          </button>
-        </div>
-
-        <button
-          type="button"
-          disabled
-          title="Conversa por voz chega em breve"
-          aria-label="Voz (em breve)"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2F4F44] shadow-glass transition hover:bg-[#3A6356] disabled:opacity-80"
-        >
-          <MicIcon />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-ChatFloatingBar.displayName = "CaleadChatFloatingBar";
 
 export interface ChatHeaderProps {
   companyName: string;
@@ -181,31 +113,14 @@ export interface ChatBarProps {
 }
 
 export function ChatBar({
-  companyName,
-  placeholder,
-  inputValue,
-  onInputChange,
+  companyName: _companyName,
   onExpand,
-  onSubmit,
 }: ChatBarProps) {
-  const suggestions = [
-    `O que a ${companyName} faz?`,
-    "Quanto custa um projeto?",
-    "Como funciona o processo?",
-  ];
   return (
     <ChatFloatingBar
-      placeholder={placeholder ?? "Pergunte qualquer coisa..."}
-      inputValue={inputValue}
-      onInputChange={onInputChange}
-      onSubmit={onSubmit}
+      typewriterText={`Digite uma Dúvida ou Aperte para Falar com nosso Agente`}
+      onActivate={onExpand}
       onFocus={onExpand}
-      suggestions={suggestions}
-      onSuggestionSelect={(text) => {
-        onInputChange?.(text);
-        onExpand?.();
-        onSubmit?.();
-      }}
     />
   );
 }
@@ -319,12 +234,7 @@ ChatPanel.displayName = "CaleadChatPanel";
 
 export function ChatWidgetShell({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div
-      className={cn(
-        "flex w-full flex-col items-center justify-end bg-transparent px-2 pb-2",
-        className
-      )}
-    >
+    <div className={cn("flex w-full items-end justify-center bg-transparent p-0", className)}>
       {children}
     </div>
   );

@@ -49,7 +49,7 @@
     iframe.src = widgetSrc();
     Object.assign(iframe.style, {
       width: "100%",
-      height: "120px",
+      height: "64px",
       border: "none",
       display: "block",
       background: "transparent",
@@ -91,7 +91,7 @@
 
   function setBarHeight(container, iframe, height) {
     if (currentMode !== "bar") return;
-    var px = Math.max(72, Math.min(height + 4, 220));
+    var px = Math.max(56, Math.min(height + 2, 80));
     iframe.style.height = px + "px";
     container.style.height = px + "px";
   }
