@@ -18,6 +18,14 @@ function uid() {
 const OPENING_MESSAGE = (companyName: string) =>
   `Oi! Sou o consultor comercial de IA da ${companyName}. Posso te explicar nossos serviços, entender o que você precisa e, se fizer sentido, marcar uma conversa com um especialista. Como posso te ajudar?`;
 
+function defaultSuggestions(companyName: string) {
+  return [
+    `O que a ${companyName} faz?`,
+    "Quanto custa um projeto?",
+    "Como funciona o processo?",
+  ];
+}
+
 type WidgetMode = "bar" | "panel";
 
 function getVisitorSessionId() {
@@ -151,7 +159,14 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
   if (mode === "bar") {
     return (
       <ChatWidgetShell>
-        <ChatFloatingBar onActivate={expand} disabled={isSending} />
+        <ChatFloatingBar
+          suggestions={defaultSuggestions(companyName)}
+          inputValue={input}
+          onInputChange={setInput}
+          onSubmit={handleSend}
+          onSuggestionSelect={(text) => void sendMessage(text)}
+          disabled={isSending}
+        />
       </ChatWidgetShell>
     );
   }

@@ -113,14 +113,19 @@ export interface ChatBarProps {
 }
 
 export function ChatBar({
-  companyName: _companyName,
+  companyName,
   onExpand,
 }: ChatBarProps) {
+  const suggestions = [
+    `O que a ${companyName} faz?`,
+    "Quanto custa um projeto?",
+    "Como funciona o processo?",
+  ];
   return (
     <ChatFloatingBar
-      typewriterText={`Digite uma Dúvida ou Aperte para Falar com nosso Agente`}
-      onActivate={onExpand}
-      onFocus={onExpand}
+      suggestions={suggestions}
+      onSuggestionSelect={() => onExpand?.()}
+      onSubmit={() => onExpand?.()}
     />
   );
 }

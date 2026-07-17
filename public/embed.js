@@ -91,7 +91,7 @@
 
   function setBarHeight(container, iframe, height) {
     if (currentMode !== "bar") return;
-    var px = Math.max(56, Math.min(height + 2, 80));
+    var px = Math.max(56, Math.min(height + 2, 160));
     iframe.style.height = px + "px";
     container.style.height = px + "px";
   }
