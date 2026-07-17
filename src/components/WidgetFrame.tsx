@@ -19,18 +19,31 @@ export default function WidgetFrame({ children }: { children: ReactNode }) {
     const root = rootRef.current;
     if (!root) return;
 
+    function contentEl(): HTMLElement {
+      // Shell (filho) costuma ser h-full; o conteúdo real (barra/painel)
+      // é o neto — é ele que muda de altura no hover das chips.
+      const shell = root!.firstElementChild as HTMLElement | null;
+      const inner = shell?.firstElementChild as HTMLElement | null;
+      return inner ?? shell ?? root!;
+    }
+
     function publishHeight() {
-      // Mede o conteúdo real (filho), não o wrapper h-full — senão o
-      // iframe entra em feedback e cresce até o teto (~160px), deixando
-      // a barra "flutuando" longe do fundo da viewport.
-      const content = root!.firstElementChild as HTMLElement | null;
-      const height = Math.ceil((content ?? root!).getBoundingClientRect().height);
+      const height = Math.ceil(contentEl().getBoundingClientRect().height);
       window.parent.postMessage({ type: "calead:height", height }, "*");
     }
 
     publishHeight();
+
     const observer = new ResizeObserver(publishHeight);
     observer.observe(root);
+
+    const shell = root.firstElementChild;
+    if (shell instanceof HTMLElement) {
+      observer.observe(shell);
+      const inner = shell.firstElementChild;
+      if (inner instanceof HTMLElement) observer.observe(inner);
+    }
+
     window.addEventListener("resize", publishHeight);
 
     return () => {

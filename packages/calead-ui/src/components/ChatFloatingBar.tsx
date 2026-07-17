@@ -143,17 +143,18 @@ export function ChatFloatingBar({
 
   return (
     <div
-      className="flex w-full max-w-[680px] flex-col items-stretch gap-2.5"
+      className="relative flex w-full max-w-[680px] flex-col items-stretch gap-2.5"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <div
         className={cn(
-          "flex flex-wrap justify-center gap-2 px-1 transition-all duration-200 ease-out",
+          "flex flex-wrap justify-center gap-2 px-1 transition-[opacity,transform] duration-200 ease-out",
           showSuggestions
-            ? "max-h-24 translate-y-0 opacity-100"
-            : "pointer-events-none max-h-0 -translate-y-1 overflow-hidden opacity-0"
+            ? "translate-y-0 opacity-100"
+            : "pointer-events-none absolute -z-10 translate-y-1 opacity-0"
         )}
+        aria-hidden={!showSuggestions}
       >
         {suggestions.map((text) => (
           <button

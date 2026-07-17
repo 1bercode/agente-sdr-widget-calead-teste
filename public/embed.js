@@ -92,7 +92,8 @@
 
   function setBarHeight(container, iframe, height) {
     if (currentMode !== "bar") return;
-    var px = Math.max(52, Math.min(Math.ceil(height), 160));
+    // Folga pra glow do mic + chips no hover (barra ~60 + chips ~48)
+    var px = Math.max(52, Math.min(Math.ceil(height) + 4, 220));
     iframe.style.height = px + "px";
     container.style.height = px + "px";
   }
