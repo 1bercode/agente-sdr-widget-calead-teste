@@ -100,7 +100,7 @@ export function ChatFloatingBar({
         disabled={disabled}
         aria-label={typewriterText}
         className={cn(
-          "flex min-w-0 flex-1 items-center gap-3 rounded-[18px] bg-[#2a2a2e] px-4 py-3.5 text-left shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition hover:bg-[#323238] disabled:opacity-50",
+          "flex min-w-0 flex-1 items-center gap-3 rounded-[18px] bg-[#2a2a2e] px-4 py-3.5 text-left transition hover:bg-[#323238] disabled:opacity-50",
           "border border-white/[0.06]"
         )}
       >
