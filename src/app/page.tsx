@@ -1,19 +1,20 @@
 import Link from "next/link";
+import { Button } from "@calead/ui";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 p-8">
-      <div className="max-w-xl space-y-4 text-center">
-        <h1 className="text-2xl font-semibold text-slate-900">Calead</h1>
-        <p className="text-slate-600">
-          Crie um agente qualificador de IA pro seu site: ele lê seu site, conversa com o
-          visitante, qualifica de forma leve e te conecta com um humano no momento certo.
+    <main className="calead-bg flex min-h-screen items-center justify-center p-8">
+      <div className="max-w-xl space-y-5 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[14px] bg-gradient-to-br from-white/90 to-white/55 font-display text-xl font-bold text-[#111]">
+          C
+        </div>
+        <h1 className="font-display text-3xl font-bold tracking-[-0.02em] text-white/92">Calead</h1>
+        <p className="text-[15px] leading-relaxed text-white/55">
+          Crie um agente SDR consultivo pro seu site: lê seu site, conversa com visitantes, qualifica
+          de forma natural e convida pra reunião no momento certo.
         </p>
-        <Link
-          href="/dashboard"
-          className="inline-block rounded-lg bg-calead-accent px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
-        >
-          Entrar no dashboard
+        <Link href="/login">
+          <Button>Entrar no dashboard</Button>
         </Link>
       </div>
     </main>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@calead/ui";
 
 export default function RecrawlButton({ agentId }: { agentId: string }) {
   const router = useRouter();
@@ -30,16 +31,11 @@ export default function RecrawlButton({ agentId }: { agentId: string }) {
   }
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-3">
-      <button
-        type="button"
-        onClick={handleRecrawl}
-        disabled={loading}
-        className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-      >
+    <div className="mt-3.5 flex flex-wrap items-center gap-3">
+      <Button variant="ghost" size="sm" onClick={handleRecrawl} disabled={loading}>
         {loading ? "Relendo site..." : "Reler site agora"}
-      </button>
-      {message && <span className="text-xs text-slate-500">{message}</span>}
+      </Button>
+      {message && <span className="text-xs text-white/42">{message}</span>}
     </div>
   );
 }

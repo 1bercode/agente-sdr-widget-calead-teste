@@ -12,16 +12,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-calead-accent text-white hover:opacity-90 disabled:opacity-50",
-  secondary: "border border-slate-200 bg-white text-slate-700 hover:border-calead-accent hover:text-calead-accent",
-  ghost: "text-slate-500 hover:text-slate-800 hover:bg-slate-50",
-  link: "text-calead-accent hover:underline p-0 h-auto",
+  primary: "bg-white/[0.92] text-[#141519] hover:bg-white disabled:opacity-40",
+  secondary:
+    "border border-white/[0.18] bg-white/[0.04] text-white/90 hover:bg-white/[0.08] disabled:opacity-40",
+  ghost: "text-white/70 hover:bg-white/[0.06] hover:text-white/90 disabled:opacity-40",
+  link: "text-white/60 underline underline-offset-4 decoration-white/25 hover:text-white/85 p-0 h-auto",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "px-3 py-1.5 text-xs rounded-lg",
-  md: "px-4 py-2 text-sm rounded-lg",
-  lg: "px-5 py-2.5 text-sm rounded-lg",
+  sm: "px-3 py-1.5 text-xs rounded-[9px]",
+  md: "px-[18px] py-[11px] text-[13.5px] rounded-[11px]",
+  lg: "px-6 py-3 text-sm rounded-[12px]",
 };
 
 export function Button({
@@ -35,7 +36,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center font-medium transition disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center font-semibold font-sans transition disabled:cursor-not-allowed",
         variant !== "link" && sizeClasses[size],
         variantClasses[variant],
         fullWidth && "w-full",

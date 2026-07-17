@@ -8,18 +8,18 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-calead-accentSoft text-calead-accent",
-  success: "bg-emerald-100 text-emerald-700",
-  warning: "bg-amber-100 text-amber-800",
-  error: "bg-red-100 text-red-700",
-  neutral: "bg-slate-100 text-slate-600",
+  default: "bg-white/[0.06] border border-white/10 text-white/80",
+  success: "bg-emerald-400/10 border border-emerald-400/25 text-emerald-200",
+  warning: "bg-white/[0.05] border border-white/10 text-white/80",
+  error: "bg-red-400/10 border border-red-400/25 text-red-200",
+  neutral: "bg-white/[0.03] border border-white/[0.09] text-white/45",
 };
 
 export function Badge({ variant = "default", className, children, ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-full px-[13px] py-[6px] text-[12.5px] font-medium font-sans",
         variantClasses[variant],
         className
       )}

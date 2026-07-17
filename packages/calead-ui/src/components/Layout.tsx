@@ -11,8 +11,8 @@ export function PageHeader({ title, description, action, className, ...props }: 
   return (
     <div className={cn("flex items-center justify-between gap-4", className)} {...props}>
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
-        {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
+        <h1 className="font-display text-[26px] font-bold tracking-[-0.02em] text-white/92">{title}</h1>
+        {description && <p className="mt-1 text-[13.5px] text-white/42">{description}</p>}
       </div>
       {action}
     </div>
@@ -25,7 +25,7 @@ export function EmptyState({ children, className }: { children: ReactNode; class
   return (
     <div
       className={cn(
-        "rounded-lg border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500",
+        "rounded-2xl border border-dashed border-white/[0.14] bg-white/[0.02] px-4 py-10 text-center text-sm text-white/42",
         className
       )}
     >
@@ -40,7 +40,7 @@ export function CodeBlock({ children, className }: { children: ReactNode; classN
   return (
     <pre
       className={cn(
-        "overflow-x-auto rounded-lg bg-slate-900 px-4 py-3 text-xs leading-relaxed text-slate-100",
+        "overflow-x-auto rounded-[11px] border border-white/[0.08] bg-black/[0.35] px-[15px] py-[15px] font-mono text-[11.5px] leading-[1.7] text-white/70",
         className
       )}
     >
@@ -59,16 +59,35 @@ export interface AppShellProps {
 
 export function AppShell({ brand = "Calead", onLogout, children }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-        <div>{typeof brand === "string" ? <span className="text-lg font-semibold text-slate-900">{brand}</span> : brand}</div>
-        {onLogout && (
-          <button type="button" onClick={onLogout} className="text-sm text-slate-500 hover:text-slate-800">
-            Sair
-          </button>
-        )}
+    <div className="calead-bg">
+      <header className="sticky top-0 z-20 border-b border-white/[0.07] bg-[rgba(12,13,16,0.6)] backdrop-blur-[16px]">
+        <div className="mx-auto flex max-w-[940px] items-center justify-between px-8 py-4">
+          <div className="flex items-center gap-2.5">
+            {typeof brand === "string" ? (
+              <>
+                <span className="flex h-7 w-7 items-center justify-center rounded-[9px] bg-gradient-to-br from-white/90 to-white/55 font-display text-sm font-bold text-[#111]">
+                  C
+                </span>
+                <span className="font-display text-base font-bold tracking-[-0.01em] text-white/92">
+                  {brand}
+                </span>
+              </>
+            ) : (
+              brand
+            )}
+          </div>
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="text-[13px] text-white/42 transition hover:text-white/80"
+            >
+              Sair
+            </button>
+          )}
+        </div>
       </header>
-      <main className="mx-auto max-w-4xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-[940px] px-8 py-9 pb-20">{children}</main>
     </div>
   );
 }

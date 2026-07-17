@@ -16,8 +16,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <AppShell
       brand={
-        <Link href="/dashboard" className="text-lg font-semibold text-slate-900">
-          Calead
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-[9px] bg-gradient-to-br from-white/90 to-white/55 font-display text-sm font-bold text-[#111]">
+            C
+          </span>
+          <span className="font-display text-base font-bold tracking-[-0.01em] text-white/92">Calead</span>
         </Link>
       }
       onLogout={handleLogout}

@@ -9,9 +9,19 @@ body {
 
 body {
   background: transparent;
+  font-family: "Inter", system-ui, sans-serif;
 }
 
 /* Preview local do widget em /test-site */
 html:has([data-calead-preview]) {
   background: #f0f0f0;
+}
+
+/* Fundo padrão do dashboard/login — "Neutral Glass": vidro fosco escuro
+   com dois brilhos radiais suaves, igual ao DesignSystem.dc.html. */
+.calead-bg {
+  min-height: 100vh;
+  background: radial-gradient(70% 55% at 78% -5%, rgba(120, 132, 155, 0.16), transparent),
+    radial-gradient(55% 45% at 5% 100%, rgba(90, 100, 120, 0.12), transparent), #0c0d10;
+  color: rgba(255, 255, 255, 0.92);
 }

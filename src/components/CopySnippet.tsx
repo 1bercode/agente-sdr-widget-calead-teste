@@ -26,11 +26,12 @@ export default function CopySnippet({ agentId }: { agentId: string }) {
   return (
     <div>
       <CodeBlock>{snippet}</CodeBlock>
-      <Button variant="secondary" size="sm" onClick={handleCopy} className="mt-2">
+      <Button variant="ghost" size="sm" onClick={handleCopy} className="mt-3">
         {copied ? "Copiado ✓" : "Copiar snippet"}
       </Button>
-      <p className="mt-2 text-xs text-slate-400">
-        Cola isso antes do <code>&lt;/body&gt;</code> do site onde quer que o agente apareça.
+      <p className="mt-2 text-[11.5px] text-white/35">
+        Cola isso antes do <code className="rounded bg-black/30 px-1">&lt;/body&gt;</code> do site onde quer
+        que o agente apareça.
         {!origin && " (o domínio real aparece aqui quando a página carregar no navegador)"}
       </p>
     </div>

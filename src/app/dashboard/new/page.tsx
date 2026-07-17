@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, Card, CardTitle, Input, Textarea } from "@calead/ui";
+import { Button, Card, Input, Textarea } from "@calead/ui";
 
 export default function NewAgentPage() {
   const router = useRouter();
@@ -35,27 +36,30 @@ export default function NewAgentPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-slate-900">Novo agente</h1>
+    <div>
+      <Link href="/dashboard" className="mb-3.5 block text-[13px] text-white/42 hover:text-white/70">
+        ← Todos os agentes
+      </Link>
+      <h1 className="mb-[22px] font-display text-[26px] font-bold tracking-[-0.02em] text-white/92">
+        Novo agente
+      </h1>
 
-      <Card>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <CardTitle>Novo agente</CardTitle>
-
+      <Card padding="lg">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nome interno</label>
+            <label className="mb-[7px] block text-[12.5px] font-semibold text-white/65">Nome interno</label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="Ex: Widget site principal"
             />
-            <p className="mt-1 text-xs text-slate-400">Só aparece aqui no dashboard, não pro visitante.</p>
+            <p className="mt-[7px] text-[11.5px] text-white/42">Só aparece aqui no dashboard, não pro visitante.</p>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Nome da empresa (mostrado no widget)
+            <label className="mb-[7px] block text-[12.5px] font-semibold text-white/65">
+              Nome da empresa <span className="text-white/42">(mostrado no widget)</span>
             </label>
             <Input
               value={companyName}
@@ -66,37 +70,43 @@ export default function NewAgentPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Site da empresa</label>
+            <label className="mb-[7px] block text-[12.5px] font-semibold text-white/65">Site da empresa</label>
             <Input
               value={siteUrl}
               onChange={(e) => setSiteUrl(e.target.value)}
               placeholder="https://empresa.com"
             />
-            <p className="mt-1 text-xs text-slate-400">
-              A gente lê a home desse site na hora de criar o agente, pra ele já responder dúvidas sobre o produto.
+            <p className="mt-[7px] text-[11.5px] text-white/42">
+              Lemos a home desse site na hora de criar o agente, pra ele já responder dúvidas sobre o produto.
             </p>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Como esse agente deve agir (opcional)
+            <label className="mb-[7px] block text-[12.5px] font-semibold text-white/65">
+              Como esse agente deve agir <span className="text-white/42">(opcional)</span>
             </label>
             <Textarea
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
               rows={5}
+              className="resize-none"
               placeholder="Ex: Somos uma consultoria B2B. Foque em entender o tamanho da empresa e a dor principal antes de oferecer reunião."
             />
-            <p className="mt-1 text-xs text-slate-400">
-              O agente atua como SDR consultivo: qualifica, responde dúvidas e convida para reunião no momento certo.
+            <p className="mt-[7px] text-[11.5px] text-white/42">
+              Atua como SDR consultivo: qualifica, responde dúvidas e convida pra reunião no momento certo.
             </p>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-300">{error}</p>}
 
-          <Button type="submit" disabled={loading}>
-            {loading ? "Criando e lendo o site..." : "Criar agente"}
-          </Button>
+          <div className="flex gap-2.5">
+            <Button type="submit" disabled={loading}>
+              {loading ? "Criando e lendo o site..." : "Criar e ler o site"}
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => router.push("/dashboard")}>
+              Cancelar
+            </Button>
+          </div>
         </form>
       </Card>
     </div>

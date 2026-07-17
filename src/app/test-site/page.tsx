@@ -12,7 +12,7 @@ export default function TestSitePage({
 
   return (
     <>
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#f0f0f0]" data-calead-preview>
         <header className="flex items-center justify-between border-b px-8 py-4">
           <span className="text-lg font-bold text-slate-900">Empresa Exemplo</span>
           <nav className="flex gap-6 text-sm text-slate-600">
