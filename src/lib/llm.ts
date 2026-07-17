@@ -5,98 +5,65 @@ interface GenerateReplyParams {
   history: ChatMessage[];
 }
 
+// Groq: free tier bem mais folgado que o Gemini (30 req/min, 1000 req/dia),
+// sem cartão de crédito, API compatível com o formato OpenAI. Trocamos o
+// Gemini pelo Groq porque o free tier do Gemini caiu pra ~20 req/dia e os
+// modelos 1.5 foram desligados de vez pelo Google.
 const MODEL_CANDIDATES = [
-  process.env.GEMINI_MODEL,
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-latest",
+  process.env.GROQ_MODEL,
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
 ].filter(Boolean) as string[];
 
 function getApiKey(): string {
-  const key =
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
-    process.env.GEMINI_API_KEY ||
-    process.env.GOOGLE_API_KEY;
+  const key = process.env.GROQ_API_KEY;
   if (!key) {
-    throw new Error("GOOGLE_GENERATIVE_AI_API_KEY não configurada");
+    throw new Error("GROQ_API_KEY não configurada");
   }
   return key;
 }
 
-function toGeminiContents(history: ChatMessage[]) {
+function toGroqMessages(systemPrompt: string, history: ChatMessage[]) {
   const filtered = history.filter((m) => m.role === "user" || m.role === "assistant");
-
-  // Gemini exige que contents comece com role "user" — a mensagem de abertura
-  // do assistente fica só na UI; o system prompt já cobre o contexto inicial.
-  const firstUserIdx = filtered.findIndex((m) => m.role === "user");
-  const slice = firstUserIdx >= 0 ? filtered.slice(firstUserIdx) : filtered;
-
-  const contents = slice.map((m) => ({
-    role: m.role === "assistant" ? ("model" as const) : ("user" as const),
-    parts: [{ text: m.content }],
-  }));
-
-  if (contents.length === 0) {
-    return [{ role: "user" as const, parts: [{ text: "Olá" }] }];
-  }
-
-  if (contents[0].role !== "user") {
-    contents.unshift({ role: "user" as const, parts: [{ text: "Olá" }] });
-  }
-
-  return contents;
+  return [
+    { role: "system" as const, content: systemPrompt },
+    ...filtered.map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    })),
+  ];
 }
 
-async function callGeminiModel(
+async function callGroqModel(
   model: string,
   apiKey: string,
   { systemPrompt, history }: GenerateReplyParams
 ): Promise<string> {
-  const contents = toGeminiContents(history);
-  if (contents.length === 0) {
-    throw new Error("Histórico vazio para o Gemini");
-  }
+  const messages = toGroqMessages(systemPrompt, history);
 
-  // Auth keys (AQ.*) funcionam melhor no header — query string pode falhar
-  // com caracteres especiais e algumas configs da Vercel.
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-
-  const payload = JSON.stringify({
-    system_instruction: { parts: [{ text: systemPrompt }] },
-    contents,
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 600,
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
     },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.7,
+      max_tokens: 600,
+    }),
   });
-
-  const headers = {
-    "Content-Type": "application/json",
-    "x-goog-api-key": apiKey,
-  };
-
-  let res = await fetch(url, { method: "POST", headers, body: payload });
-
-  // Fallback: algumas chaves AQ.* falham no header e funcionam via query string.
-  if (!res.ok && (res.status === 401 || res.status === 403 || res.status === 400)) {
-    const fallback = await fetch(`${url}?key=${encodeURIComponent(apiKey)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: payload,
-    });
-    if (fallback.ok) res = fallback;
-  }
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`Gemini ${model} ${res.status}: ${errText.slice(0, 300)}`);
+    throw new Error(`Groq ${model} ${res.status}: ${errText.slice(0, 300)}`);
   }
 
   const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = data?.choices?.[0]?.message?.content;
   if (!text) {
-    throw new Error(`Gemini ${model} resposta vazia`);
+    throw new Error(`Groq ${model} resposta vazia`);
   }
   return text.trim();
 }
@@ -108,14 +75,14 @@ export async function generateReply(params: GenerateReplyParams): Promise<string
 
   for (const model of models) {
     try {
-      return await callGeminiModel(model, apiKey, params);
+      return await callGroqModel(model, apiKey, params);
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
       console.error(`[llm] falha com modelo ${model}:`, lastError.message);
     }
   }
 
-  throw lastError ?? new Error("Nenhum modelo Gemini disponível");
+  throw lastError ?? new Error("Nenhum modelo Groq disponível");
 }
 
 export interface QualificationExtraction {
@@ -153,29 +120,29 @@ export async function extractQualification(
     .map((m) => `${m.role === "user" ? "Visitante" : "Consultor"}: ${m.content}`)
     .join("\n");
 
-  const model = MODEL_CANDIDATES[0] ?? "gemini-2.0-flash";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const model = MODEL_CANDIDATES[0] ?? "llama-3.3-70b-versatile";
 
   try {
-    const res = await fetch(url, {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: EXTRACTION_SYSTEM_PROMPT }] },
-        contents: [{ role: "user", parts: [{ text: transcript }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 300,
-          responseMimeType: "application/json",
-        },
+        model,
+        messages: [
+          { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+          { role: "user", content: transcript },
+        ],
+        temperature: 0.2,
+        max_tokens: 300,
+        response_format: { type: "json_object" },
       }),
     });
     if (!res.ok) return null;
     const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const text = data?.choices?.[0]?.message?.content;
     if (!text) return null;
     return JSON.parse(text) as QualificationExtraction;
   } catch (err) {
