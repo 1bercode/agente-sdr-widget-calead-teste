@@ -5,15 +5,17 @@ interface GenerateReplyParams {
   history: ChatMessage[];
 }
 
-// Groq: free tier bem mais folgado que o Gemini (30 req/min, 1000 req/dia),
-// sem cartão de crédito, API compatível com o formato OpenAI. Trocamos o
-// Gemini pelo Groq porque o free tier do Gemini caiu pra ~20 req/dia e os
-// modelos 1.5 foram desligados de vez pelo Google.
+const HISTORY_LIMIT = 12;
+const MAX_RETRIES = 2;
+
+// Fallback: 70b primeiro (qualidade), 8b se falhar (rate limit / indisponibilidade).
 const MODEL_CANDIDATES = [
   process.env.GROQ_MODEL,
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
 ].filter(Boolean) as string[];
+
+const EXTRACTION_MODEL = "llama-3.1-8b-instant";
 
 function getApiKey(): string {
   const key = process.env.GROQ_API_KEY;
@@ -23,15 +25,71 @@ function getApiKey(): string {
   return key;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function toGroqMessages(systemPrompt: string, history: ChatMessage[]) {
   const filtered = history.filter((m) => m.role === "user" || m.role === "assistant");
+  const recent = filtered.slice(-HISTORY_LIMIT);
   return [
     { role: "system" as const, content: systemPrompt },
-    ...filtered.map((m) => ({
+    ...recent.map((m) => ({
       role: m.role as "user" | "assistant",
       content: m.content,
     })),
   ];
+}
+
+function isRetryableStatus(status: number) {
+  return status === 429 || status === 503;
+}
+
+async function callGroqChat(
+  model: string,
+  apiKey: string,
+  messages: Array<{ role: string; content: string }>,
+  options: { temperature: number; max_tokens: number; response_format?: { type: string } }
+): Promise<string> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: options.temperature,
+        max_tokens: options.max_tokens,
+        ...(options.response_format ? { response_format: options.response_format } : {}),
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const text = data?.choices?.[0]?.message?.content;
+      if (!text) {
+        throw new Error(`Groq ${model} resposta vazia`);
+      }
+      return text.trim();
+    }
+
+    const errText = await res.text();
+    lastError = new Error(`Groq ${model} ${res.status}: ${errText.slice(0, 300)}`);
+
+    if (isRetryableStatus(res.status) && attempt < MAX_RETRIES) {
+      await sleep(1000 * (attempt + 1));
+      continue;
+    }
+
+    throw lastError;
+  }
+
+  throw lastError ?? new Error(`Groq ${model} falhou após retries`);
 }
 
 async function callGroqModel(
@@ -40,32 +98,10 @@ async function callGroqModel(
   { systemPrompt, history }: GenerateReplyParams
 ): Promise<string> {
   const messages = toGroqMessages(systemPrompt, history);
-
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 600,
-    }),
+  return callGroqChat(model, apiKey, messages, {
+    temperature: 0.6,
+    max_tokens: 260,
   });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Groq ${model} ${res.status}: ${errText.slice(0, 300)}`);
-  }
-
-  const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content;
-  if (!text) {
-    throw new Error(`Groq ${model} resposta vazia`);
-  }
-  return text.trim();
 }
 
 export async function generateReply(params: GenerateReplyParams): Promise<string> {
@@ -115,35 +151,28 @@ export async function extractQualification(
     return null;
   }
 
-  const transcript = history
+  const recent = history
     .filter((m) => m.role === "user" || m.role === "assistant")
+    .slice(-HISTORY_LIMIT);
+
+  const transcript = recent
     .map((m) => `${m.role === "user" ? "Visitante" : "Consultor"}: ${m.content}`)
     .join("\n");
 
-  const model = MODEL_CANDIDATES.find(Boolean) ?? "llama-3.3-70b-versatile";
-
   try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
-          { role: "user", content: transcript },
-        ],
+    const text = await callGroqChat(
+      EXTRACTION_MODEL,
+      apiKey,
+      [
+        { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+        { role: "user", content: transcript },
+      ],
+      {
         temperature: 0.2,
         max_tokens: 300,
         response_format: { type: "json_object" },
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text = data?.choices?.[0]?.message?.content;
-    if (!text) return null;
+      }
+    );
     return JSON.parse(text) as QualificationExtraction;
   } catch (err) {
     console.error("[llm] extractQualification falhou:", err);

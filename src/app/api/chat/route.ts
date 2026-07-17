@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import { buildSystemPrompt } from "@/lib/prompt";
 import { generateReply, extractQualification } from "@/lib/llm";
 import { getOrCreateConversation, insertMessage, updateQualification, getAgentBySlug } from "@/lib/db";
@@ -6,11 +7,38 @@ import type { ChatMessage } from "@/lib/types";
 
 export const runtime = "nodejs";
 
+const DEGRADED_REPLY =
+  "Desculpa, demorei um pouco aqui. Pode mandar de novo? Quero te ajudar da melhor forma.";
+
 interface ChatRequestBody {
   messages: ChatMessage[];
   agentId: string;
   conversationId?: string | null;
   visitorSessionId?: string | null;
+}
+
+async function runQualificationExtraction(
+  conversationId: string,
+  fullHistory: ChatMessage[]
+) {
+  try {
+    const extraction = await extractQualification(fullHistory);
+    if (!extraction) return;
+
+    await updateQualification(
+      conversationId,
+      {
+        empresa_ou_papel: extraction.empresa_ou_papel,
+        o_que_busca: extraction.o_que_busca,
+        momento: extraction.momento,
+        fit: extraction.fit,
+        resumo_para_humano: extraction.resumo_para_humano,
+      },
+      extraction.quer_falar_com_humano ? { wantsHuman: true } : {}
+    );
+  } catch (err) {
+    console.error("[/api/chat] extração de qualificação falhou:", err);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -28,10 +56,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "agentId é obrigatório" }, { status: 400 });
     }
 
-    // O agente é a fonte da verdade pra nome da empresa, instruções
-    // customizadas e conhecimento do site — nunca confiamos nisso vindo do
-    // client, pra não dar pra ninguém spoofar o comportamento de outro
-    // agente.
     const agent = await getAgentBySlug(agentId);
     if (!agent) {
       return NextResponse.json({ error: "Agente não encontrado" }, { status: 404 });
@@ -66,42 +90,22 @@ export async function POST(req: NextRequest) {
     if (conversation) {
       await insertMessage(conversation.id, "assistant", reply);
 
-      // Extração de qualificação é *awaited* (não fire-and-forget) porque
-      // em serverless (Vercel) o processo pode ser encerrado assim que a
-      // resposta é enviada — aceitamos um pouco mais de latência em troca
-      // de garantir que a qualificação é salva.
       const fullHistory: ChatMessage[] = [
         ...messages,
         { id: "tmp", role: "assistant", content: reply, createdAt: Date.now() },
       ];
-      try {
-        const extraction = await extractQualification(fullHistory);
-        if (extraction) {
-          await updateQualification(
-            conversation.id,
-            {
-              empresa_ou_papel: extraction.empresa_ou_papel,
-              o_que_busca: extraction.o_que_busca,
-              momento: extraction.momento,
-              fit: extraction.fit,
-              resumo_para_humano: extraction.resumo_para_humano,
-            },
-            extraction.quer_falar_com_humano ? { wantsHuman: true } : {}
-          );
-        }
-      } catch (err) {
-        console.error("[/api/chat] extração de qualificação falhou:", err);
-      }
+
+      // Qualificação em background — não bloqueia a resposta ao visitante.
+      const convId = conversation.id;
+      waitUntil(runQualificationExtraction(convId, fullHistory));
     }
 
     return NextResponse.json({ reply, conversationId: conversation?.id ?? conversationId ?? null });
   } catch (err) {
     console.error("[/api/chat] erro:", err);
-    // Falha honesta: não inventamos resposta, oferecemos o caminho humano.
     return NextResponse.json(
       {
-        reply:
-          "Ops, tive uma instabilidade momentânea aqui. Pode repetir sua pergunta? Enquanto isso, me conta um pouco mais do que você está buscando — assim consigo te orientar melhor.",
+        reply: DEGRADED_REPLY,
         degraded: true,
         conversationId: conversationId ?? null,
       },

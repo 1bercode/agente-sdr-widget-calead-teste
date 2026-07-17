@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChatBubble,
   ChatComposer,
@@ -9,14 +9,17 @@ import {
   ChatPanel,
   ChatWidgetShell,
 } from "@calead/ui";
+import TypewriterBubble from "@/components/TypewriterBubble";
 import type { ChatMessage, WidgetConfig } from "@/lib/types";
 
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+type WidgetMessage = ChatMessage & { animate?: boolean };
+
 const OPENING_MESSAGE = (companyName: string) =>
-  `Oi! Sou o consultor comercial de IA da ${companyName}. Posso te explicar nossos serviços, entender o que você precisa e, se fizer sentido, marcar uma conversa com um especialista. Como posso te ajudar?`;
+  `Oi! Sou o consultor de IA da ${companyName}. Me conta o que você precisa — posso explicar nossos serviços e marcar uma conversa com um especialista se fizer sentido.`;
 
 function defaultSuggestions(companyName: string) {
   return [
@@ -39,10 +42,36 @@ function getVisitorSessionId() {
   return id;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+interface ChatApiResponse {
+  reply?: string;
+  degraded?: boolean;
+  conversationId?: string | null;
+  error?: string;
+}
+
+async function requestChatReply(payload: {
+  messages: ChatMessage[];
+  agentId: string;
+  conversationId: string | null;
+  visitorSessionId: string | null;
+}): Promise<{ ok: boolean; data: ChatApiResponse }> {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = (await res.json().catch(() => ({}))) as ChatApiResponse;
+  return { ok: res.ok, data };
+}
+
 export default function ChatWidget({ config }: { config: WidgetConfig }) {
   const { companyName, agentId } = config;
   const [mode, setMode] = useState<WidgetMode>("bar");
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [messages, setMessages] = useState<WidgetMessage[]>([
     {
       id: uid(),
       role: "assistant",
@@ -53,24 +82,32 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
   const [input, setInput] = useState("");
   const [handoffRequested, setHandoffRequested] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isTypingReply, setIsTypingReply] = useState(false);
   const conversationIdRef = useRef<string | null>(null);
   const visitorSessionIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = useCallback(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
     visitorSessionIdRef.current = getVisitorSessionId();
   }, []);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, isSending]);
+    scrollToBottom();
+  }, [messages, isSending, isTypingReply, scrollToBottom]);
 
   useEffect(() => {
     window.parent.postMessage({ type: "calead:mode", mode }, "*");
   }, [mode]);
 
-  function pushMessage(role: ChatMessage["role"], content: string) {
-    setMessages((prev) => [...prev, { id: uid(), role, content, createdAt: Date.now() }]);
+  function pushMessage(role: ChatMessage["role"], content: string, options?: { animate?: boolean }) {
+    setMessages((prev) => [
+      ...prev,
+      { id: uid(), role, content, createdAt: Date.now(), animate: options?.animate },
+    ]);
   }
 
   function expand() {
@@ -83,46 +120,51 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || isSending) return;
+    if (!trimmed || isSending || isTypingReply) return;
 
     if (mode === "bar") expand();
 
-    const nextHistory = [
-      ...messages,
-      { id: uid(), role: "user" as const, content: trimmed, createdAt: Date.now() },
-    ];
+    const userMessage: ChatMessage = {
+      id: uid(),
+      role: "user",
+      content: trimmed,
+      createdAt: Date.now(),
+    };
+    const nextHistory = [...messages, userMessage];
     pushMessage("user", trimmed);
     setInput("");
     setIsSending(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: nextHistory,
-          agentId,
-          conversationId: conversationIdRef.current,
-          visitorSessionId: visitorSessionIdRef.current,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const payload = {
+        messages: nextHistory,
+        agentId,
+        conversationId: conversationIdRef.current,
+        visitorSessionId: visitorSessionIdRef.current,
+      };
+
+      let { ok, data } = await requestChatReply(payload);
+
+      if (ok && data.degraded) {
+        await sleep(900);
+        ({ ok, data } = await requestChatReply(payload));
+      }
+
+      if (!ok) {
         pushMessage(
           "assistant",
           data.error === "Agente não encontrado"
             ? "Este assistente não está mais disponível. Confere com quem te enviou o link."
-            : "Ops, não consegui processar agora. Pode repetir? Me conta também o que você está buscando — quero te ajudar da melhor forma."
+            : "Desculpa, não consegui processar agora. Pode repetir?"
         );
         return;
       }
+
       if (data.conversationId) conversationIdRef.current = data.conversationId;
-      pushMessage("assistant", data.reply as string);
+      setIsTypingReply(true);
+      pushMessage("assistant", data.reply ?? "", { animate: true });
     } catch {
-      pushMessage(
-        "assistant",
-        "Ops, não consegui processar agora. Pode repetir? Me conta também o que você está buscando — quero te ajudar da melhor forma."
-      );
+      pushMessage("assistant", "Desculpa, não consegui processar agora. Pode repetir?");
     } finally {
       setIsSending(false);
     }
@@ -165,7 +207,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
           onInputChange={setInput}
           onSubmit={handleSend}
           onSuggestionSelect={(text) => void sendMessage(text)}
-          disabled={isSending}
+          disabled={isSending || isTypingReply}
         />
       </ChatWidgetShell>
     );
@@ -177,14 +219,35 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
         <ChatHeader companyName={companyName} onCollapse={collapse} />
 
         <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
-          {messages.map((m) => (
-            <ChatBubble
-              key={m.id}
-              role={m.role === "system" ? "system" : m.role === "user" ? "user" : "assistant"}
-            >
-              {m.content}
-            </ChatBubble>
-          ))}
+          {messages.map((m, index) => {
+            const isLastAssistant =
+              m.role === "assistant" && m.animate && index === messages.length - 1;
+
+            if (isLastAssistant) {
+              return (
+                <TypewriterBubble
+                  key={m.id}
+                  text={m.content}
+                  onTick={scrollToBottom}
+                  onComplete={() => {
+                    setIsTypingReply(false);
+                    setMessages((prev) =>
+                      prev.map((msg) => (msg.id === m.id ? { ...msg, animate: false } : msg))
+                    );
+                  }}
+                />
+              );
+            }
+
+            return (
+              <ChatBubble
+                key={m.id}
+                role={m.role === "system" ? "system" : m.role === "user" ? "user" : "assistant"}
+              >
+                {m.content}
+              </ChatBubble>
+            );
+          })}
           {isSending && <ChatBubble role="typing">digitando...</ChatBubble>}
         </div>
 
@@ -192,7 +255,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
           value={input}
           onChange={setInput}
           onSend={handleSend}
-          disabled={isSending}
+          disabled={isSending || isTypingReply}
           meetingCta={
             <button
               type="button"
