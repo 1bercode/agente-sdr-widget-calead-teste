@@ -51,7 +51,7 @@ export default function WidgetFrame({ children }: { children: ReactNode }) {
         ref={rootRef}
         id="calead-widget-root"
         data-calead-widget
-        className="w-full bg-transparent"
+        className="h-full w-full bg-transparent"
       >
         {children}
       </div>
