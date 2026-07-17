@@ -11,9 +11,9 @@
     return;
   }
 
-  var COLLAPSED_HEIGHT = "148px";
   var PANEL_HEIGHT_DESKTOP = "min(560px, 80vh)";
   var WIDGET_WIDTH = "min(680px, calc(100vw - 32px))";
+  var currentMode = "bar";
 
   function isMobile() {
     return window.matchMedia("(max-width: 480px)").matches;
@@ -33,12 +33,14 @@
       bottom: "20px",
       transform: "translateX(-50%)",
       width: WIDGET_WIDTH,
-      height: COLLAPSED_HEIGHT,
+      height: "auto",
+      minHeight: "0",
       zIndex: "2147483000",
       background: "transparent",
       boxShadow: "none",
       transition: "height 200ms ease, width 200ms ease",
       pointerEvents: "none",
+      overflow: "visible",
     });
 
     var iframe = document.createElement("iframe");
@@ -47,12 +49,14 @@
     iframe.src = widgetSrc();
     Object.assign(iframe.style, {
       width: "100%",
-      height: "100%",
+      height: "120px",
       border: "none",
       display: "block",
       background: "transparent",
+      backgroundColor: "transparent",
       colorScheme: "dark",
       pointerEvents: "auto",
+      overflow: "hidden",
     });
     iframe.setAttribute("allowtransparency", "true");
     iframe.setAttribute("scrolling", "no");
@@ -60,27 +64,51 @@
 
     container.appendChild(iframe);
     document.body.appendChild(container);
-    return container;
+    return { container: container, iframe: iframe };
   }
 
-  function setMode(container, mode) {
+  function setMode(container, iframe, mode) {
+    currentMode = mode;
     var expanded = mode === "panel";
     var mobile = isMobile();
-    container.style.height = expanded ? (mobile ? "90vh" : PANEL_HEIGHT_DESKTOP) : COLLAPSED_HEIGHT;
-    container.style.width = expanded && mobile ? "100vw" : WIDGET_WIDTH;
-    container.style.bottom = expanded && mobile ? "0" : "20px";
-    container.style.left = expanded && mobile ? "0" : "50%";
-    container.style.transform = expanded && mobile ? "none" : "translateX(-50%)";
+
+    if (expanded) {
+      container.style.height = mobile ? "90vh" : PANEL_HEIGHT_DESKTOP;
+      iframe.style.height = "100%";
+      container.style.width = mobile ? "100vw" : WIDGET_WIDTH;
+      container.style.bottom = mobile ? "0" : "20px";
+      container.style.left = mobile ? "0" : "50%";
+      container.style.transform = mobile ? "none" : "translateX(-50%)";
+      return;
+    }
+
+    container.style.width = WIDGET_WIDTH;
+    container.style.bottom = "20px";
+    container.style.left = "50%";
+    container.style.transform = "translateX(-50%)";
+    container.style.height = "auto";
+  }
+
+  function setBarHeight(container, iframe, height) {
+    if (currentMode !== "bar") return;
+    var px = Math.max(72, Math.min(height + 4, 220));
+    iframe.style.height = px + "px";
+    container.style.height = px + "px";
   }
 
   function init() {
-    var container = createContainer();
+    var parts = createContainer();
+    var container = parts.container;
+    var iframe = parts.iframe;
 
     window.addEventListener("message", function (event) {
       if (event.origin !== baseUrl) return;
       if (!event.data || typeof event.data !== "object") return;
+
       if (event.data.type === "calead:mode") {
-        setMode(container, event.data.mode);
+        setMode(container, iframe, event.data.mode);
+      } else if (event.data.type === "calead:height") {
+        setBarHeight(container, iframe, Number(event.data.height) || 0);
       } else if (event.data.type === "calead:hide") {
         container.style.display = "none";
       }

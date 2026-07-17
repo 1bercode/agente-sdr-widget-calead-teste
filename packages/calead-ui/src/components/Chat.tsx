@@ -321,7 +321,7 @@ export function ChatWidgetShell({ children, className }: { children: ReactNode; 
   return (
     <div
       className={cn(
-        "flex h-full w-full flex-col items-center justify-end bg-transparent p-3 pb-4",
+        "flex w-full flex-col items-center justify-end bg-transparent px-2 pb-2",
         className
       )}
     >

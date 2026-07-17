@@ -8,6 +8,7 @@ interface GenerateReplyParams {
 const MODEL_CANDIDATES = [
   process.env.GEMINI_MODEL,
   "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
   "gemini-1.5-flash",
   "gemini-1.5-flash-latest",
 ].filter(Boolean) as string[];
@@ -24,12 +25,27 @@ function getApiKey(): string {
 }
 
 function toGeminiContents(history: ChatMessage[]) {
-  return history
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({
-      role: m.role === "assistant" ? ("model" as const) : ("user" as const),
-      parts: [{ text: m.content }],
-    }));
+  const filtered = history.filter((m) => m.role === "user" || m.role === "assistant");
+
+  // Gemini exige que contents comece com role "user" — a mensagem de abertura
+  // do assistente fica só na UI; o system prompt já cobre o contexto inicial.
+  const firstUserIdx = filtered.findIndex((m) => m.role === "user");
+  const slice = firstUserIdx >= 0 ? filtered.slice(firstUserIdx) : filtered;
+
+  const contents = slice.map((m) => ({
+    role: m.role === "assistant" ? ("model" as const) : ("user" as const),
+    parts: [{ text: m.content }],
+  }));
+
+  if (contents.length === 0) {
+    return [{ role: "user" as const, parts: [{ text: "Olá" }] }];
+  }
+
+  if (contents[0].role !== "user") {
+    contents.unshift({ role: "user" as const, parts: [{ text: "Olá" }] });
+  }
+
+  return contents;
 }
 
 async function callGeminiModel(
@@ -46,21 +62,31 @@ async function callGeminiModel(
   // com caracteres especiais e algumas configs da Vercel.
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
+  const payload = JSON.stringify({
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents,
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 600,
     },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 600,
-      },
-    }),
   });
+
+  const headers = {
+    "Content-Type": "application/json",
+    "x-goog-api-key": apiKey,
+  };
+
+  let res = await fetch(url, { method: "POST", headers, body: payload });
+
+  // Fallback: algumas chaves AQ.* falham no header e funcionam via query string.
+  if (!res.ok && (res.status === 401 || res.status === 403 || res.status === 400)) {
+    const fallback = await fetch(`${url}?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+    });
+    if (fallback.ok) res = fallback;
+  }
 
   if (!res.ok) {
     const errText = await res.text();

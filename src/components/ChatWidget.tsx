@@ -165,7 +165,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
 
   if (mode === "bar") {
     return (
-      <ChatWidgetShell className="h-full">
+      <ChatWidgetShell>
         <ChatFloatingBar
           placeholder="Pergunte qualquer coisa..."
           inputValue={input}
@@ -181,7 +181,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
   }
 
   return (
-    <ChatWidgetShell className="h-full">
+    <ChatWidgetShell className="h-full min-h-[560px]">
       <ChatPanel className="flex h-full min-h-0 w-full max-w-[680px] flex-col">
         <ChatHeader companyName={companyName} onCollapse={collapse} />
 
