@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         reply:
-          "Desculpa, tive um problema técnico agora e não quero te dar uma resposta chutada. Quer falar direto com uma pessoa da equipe?",
+          "Ops, tive uma instabilidade momentânea aqui. Pode repetir sua pergunta? Enquanto isso, me conta um pouco mais do que você está buscando — assim consigo te orientar melhor.",
         degraded: true,
         conversationId: conversationId ?? null,
       },

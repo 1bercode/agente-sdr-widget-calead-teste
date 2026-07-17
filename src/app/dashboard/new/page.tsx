@@ -86,8 +86,7 @@ export default function NewAgentPage() {
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-calead-accent"
           />
           <p className="mt-1 text-xs text-slate-400">
-            As regras Human First (nunca fingir ser humano, nunca pressionar, sempre oferecer um humano) valem
-            sempre, independente do que for escrito aqui.
+            O agente atua como SDR consultivo: qualifica, responde dúvidas e convida para reunião no momento certo.
           </p>
         </div>
 

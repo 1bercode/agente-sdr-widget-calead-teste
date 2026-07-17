@@ -1,5 +1,6 @@
 import { getAgentById, listConversationsByAgent } from "@/lib/db";
 import CopySnippet from "@/components/CopySnippet";
+import RecrawlButton from "@/components/RecrawlButton";
 import Link from "next/link";
 
 export default async function AgentDetailPage({ params }: { params: { id: string } }) {
@@ -49,6 +50,7 @@ export default async function AgentDetailPage({ params }: { params: { id: string
             {agent.crawl_status === "done" ? "lido com sucesso" : agent.crawl_status === "failed" ? "falha ao ler" : "pendente"}
           </span>
         </p>
+        <RecrawlButton agentId={agent.id} />
         {agent.site_knowledge && (
           <details className="mt-3">
             <summary className="cursor-pointer text-sm text-calead-accent">Ver o que foi extraído</summary>

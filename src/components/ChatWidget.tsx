@@ -21,7 +21,7 @@ function getVisitorSessionId() {
 }
 
 const OPENING_MESSAGE = (companyName: string) =>
-  `Oi, tudo bem? Sou o assistente de IA da ${companyName}. Posso responder dúvidas rápidas e, quando fizer sentido, te conectar com uma pessoa de verdade. Como posso te ajudar?`;
+  `Oi! Sou o consultor comercial de IA da ${companyName}. Posso te explicar nossos serviços, entender o que você precisa e, se fizer sentido, marcar uma conversa com um especialista. Como posso te ajudar?`;
 
 type WidgetMode = "bar" | "panel";
 
@@ -102,7 +102,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     } catch (err) {
       pushMessage(
         "assistant",
-        "Desculpa, não consegui te responder agora — problema de conexão. Quer falar direto com uma pessoa da equipe?"
+        "Ops, não consegui processar agora. Pode repetir? Me conta também o que você está buscando — quero te ajudar da melhor forma."
       );
     } finally {
       setIsSending(false);
@@ -114,7 +114,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
     setHandoffRequested(true);
     pushMessage(
       "system",
-      "Combinado — vamos te conectar com uma pessoa. (O agendamento de verdade entra no próximo passo; por enquanto sua solicitação já fica registrada pra equipe ver.)"
+      "Perfeito — anotei seu interesse em falar com um especialista. Em breve alguém da equipe entra em contato para agendar a reunião."
     );
     try {
       const res = await fetch("/api/handoff", {
@@ -142,7 +142,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
           onClick={expand}
           className="flex-1 truncate text-left text-sm text-slate-500 hover:text-slate-700"
         >
-          Pergunte algo pra {companyName} · assistente de IA
+          Pergunte sobre a {companyName} · consultor comercial IA
         </button>
         <input
           value={input}
@@ -180,7 +180,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
           <p className="text-sm font-semibold">{companyName}</p>
           <p className="flex items-center gap-1 text-xs text-slate-300">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Assistente de IA · não é uma pessoa
+            Consultor comercial · assistente de IA
           </p>
         </div>
         <button
@@ -227,14 +227,14 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
         )}
       </div>
 
-      {/* Porta de saída sempre visível */}
+      {/* CTA secundário — reunião com especialista */}
       <div className="border-t border-slate-100 px-4 py-2">
         <button
           onClick={handleTalkToHuman}
           disabled={handoffRequested}
-          className="w-full rounded-lg border border-calead-accent px-3 py-2 text-sm font-medium text-calead-accent hover:bg-calead-accentSoft disabled:cursor-default disabled:opacity-50"
+          className="w-full text-center text-xs text-slate-500 hover:text-calead-accent disabled:cursor-default disabled:opacity-60"
         >
-          {handoffRequested ? "Pessoa avisada ✓" : "Falar com uma pessoa agora"}
+          {handoffRequested ? "Interesse em reunião registrado ✓" : "Prefere agendar uma reunião com um especialista?"}
         </button>
       </div>
 
