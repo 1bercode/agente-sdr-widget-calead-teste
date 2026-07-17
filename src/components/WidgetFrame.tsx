@@ -20,7 +20,11 @@ export default function WidgetFrame({ children }: { children: ReactNode }) {
     if (!root) return;
 
     function publishHeight() {
-      const height = Math.ceil(root!.getBoundingClientRect().height);
+      // Mede o conteúdo real (filho), não o wrapper h-full — senão o
+      // iframe entra em feedback e cresce até o teto (~160px), deixando
+      // a barra "flutuando" longe do fundo da viewport.
+      const content = root!.firstElementChild as HTMLElement | null;
+      const height = Math.ceil((content ?? root!).getBoundingClientRect().height);
       window.parent.postMessage({ type: "calead:height", height }, "*");
     }
 

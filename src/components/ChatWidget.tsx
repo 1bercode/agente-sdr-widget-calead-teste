@@ -200,7 +200,7 @@ export default function ChatWidget({ config }: { config: WidgetConfig }) {
 
   if (mode === "bar") {
     return (
-      <ChatWidgetShell>
+      <ChatWidgetShell className="h-full">
         <ChatFloatingBar
           suggestions={defaultSuggestions(companyName)}
           inputValue={input}

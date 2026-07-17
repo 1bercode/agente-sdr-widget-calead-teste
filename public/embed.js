@@ -13,6 +13,7 @@
 
   var PANEL_HEIGHT_DESKTOP = "min(560px, 80vh)";
   var WIDGET_WIDTH = "min(680px, calc(100vw - 32px))";
+  var BAR_BOTTOM = "10px";
   var currentMode = "bar";
 
   function isMobile() {
@@ -30,7 +31,7 @@
     Object.assign(container.style, {
       position: "fixed",
       left: "50%",
-      bottom: "20px",
+      bottom: BAR_BOTTOM,
       transform: "translateX(-50%)",
       width: WIDGET_WIDTH,
       height: "auto",
@@ -76,14 +77,14 @@
       container.style.height = mobile ? "90vh" : PANEL_HEIGHT_DESKTOP;
       iframe.style.height = "100%";
       container.style.width = mobile ? "100vw" : WIDGET_WIDTH;
-      container.style.bottom = mobile ? "0" : "20px";
+      container.style.bottom = mobile ? "0" : BAR_BOTTOM;
       container.style.left = mobile ? "0" : "50%";
       container.style.transform = mobile ? "none" : "translateX(-50%)";
       return;
     }
 
     container.style.width = WIDGET_WIDTH;
-    container.style.bottom = "20px";
+    container.style.bottom = BAR_BOTTOM;
     container.style.left = "50%";
     container.style.transform = "translateX(-50%)";
     container.style.height = "auto";
@@ -91,7 +92,7 @@
 
   function setBarHeight(container, iframe, height) {
     if (currentMode !== "bar") return;
-    var px = Math.max(56, Math.min(height + 2, 160));
+    var px = Math.max(52, Math.min(Math.ceil(height), 160));
     iframe.style.height = px + "px";
     container.style.height = px + "px";
   }
