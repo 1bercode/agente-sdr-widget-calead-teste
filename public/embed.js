@@ -1,100 +1,84 @@
 (function () {
   "use strict";
 
-  // Descobre a URL base a partir do próprio <script src="...">, para
+  // Descobre a URL base a partir do próprio <script src="...">, pra
   // funcionar embutido em qualquer site, apontando de volta pro servidor
   // do widget.
   var currentScript = document.currentScript;
   var scriptUrl = new URL(currentScript.src);
   var baseUrl = scriptUrl.origin;
 
-  var agentId = currentScript.getAttribute("data-agent-id") || "demo";
-  var companyName = currentScript.getAttribute("data-company-name") || "Calead";
-  var primaryColor = currentScript.getAttribute("data-primary-color") || "";
+  var agentId = currentScript.getAttribute("data-agent-id");
+  if (!agentId) {
+    console.error("[calead] embed.js precisa de data-agent-id no <script>.");
+    return;
+  }
 
-  var isOpen = false;
-  var iframe = null;
+  var BAR_HEIGHT = "56px";
+  var PANEL_HEIGHT_DESKTOP = "min(600px, 80vh)";
+
+  function isMobile() {
+    return window.matchMedia("(max-width: 480px)").matches;
+  }
 
   function widgetSrc() {
-    var params = new URLSearchParams({
-      agentId: agentId,
-      companyName: companyName,
-    });
-    if (primaryColor) params.set("primaryColor", primaryColor);
+    var params = new URLSearchParams({ agentId: agentId });
     return baseUrl + "/widget?" + params.toString();
   }
 
-  function createBubble() {
-    var bubble = document.createElement("button");
-    bubble.setAttribute("aria-label", "Abrir chat com " + companyName);
-    bubble.id = "calead-bubble";
-    bubble.innerHTML =
-      '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-      '<path d="M4 4h16v12H7l-3 3V4z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>' +
-      "</svg>";
-    Object.assign(bubble.style, {
+  function createContainer() {
+    var container = document.createElement("div");
+    container.id = "calead-container";
+    Object.assign(container.style, {
       position: "fixed",
-      bottom: "20px",
-      right: "20px",
-      width: "56px",
-      height: "56px",
-      borderRadius: "50%",
-      border: "none",
-      background: "#4F46E5",
-      boxShadow: "0 8px 24px rgba(15, 23, 42, 0.25)",
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
+      left: "0",
+      right: "0",
+      bottom: "0",
+      width: "100%",
+      height: BAR_HEIGHT,
       zIndex: "2147483000",
+      boxShadow: "0 -2px 12px rgba(15, 23, 42, 0.06)",
+      transition: "height 160ms ease",
+      background: "#ffffff",
     });
-    bubble.addEventListener("click", toggleWidget);
-    document.body.appendChild(bubble);
-    return bubble;
-  }
 
-  function createIframe() {
-    var frame = document.createElement("iframe");
-    frame.id = "calead-iframe";
-    frame.title = "Assistente de IA " + companyName;
-    frame.src = widgetSrc();
-    var mobile = window.matchMedia("(max-width: 480px)").matches;
-    Object.assign(frame.style, {
-      position: "fixed",
-      bottom: mobile ? "0" : "90px",
-      right: mobile ? "0" : "20px",
-      width: mobile ? "100%" : "380px",
-      height: mobile ? "100%" : "600px",
-      maxHeight: "calc(100vh - 40px)",
+    var iframe = document.createElement("iframe");
+    iframe.id = "calead-iframe";
+    iframe.title = "Assistente de IA";
+    iframe.src = widgetSrc();
+    Object.assign(iframe.style, {
+      width: "100%",
+      height: "100%",
       border: "none",
-      borderRadius: mobile ? "0" : "16px",
-      boxShadow: "0 16px 48px rgba(15, 23, 42, 0.28)",
-      zIndex: "2147483000",
-      display: "none",
+      display: "block",
       colorScheme: "light",
     });
-    document.body.appendChild(frame);
-    return frame;
+
+    container.appendChild(iframe);
+    document.body.appendChild(container);
+    return container;
   }
 
-  function toggleWidget() {
-    isOpen = !isOpen;
-    iframe.style.display = isOpen ? "block" : "none";
+  function setMode(container, mode) {
+    var expanded = mode === "panel";
+    var mobile = isMobile();
+    container.style.height = expanded ? (mobile ? "100%" : PANEL_HEIGHT_DESKTOP) : BAR_HEIGHT;
+    container.style.boxShadow = expanded
+      ? "0 -16px 48px rgba(15, 23, 42, 0.22)"
+      : "0 -2px 12px rgba(15, 23, 42, 0.06)";
   }
-
-  function closeWidget() {
-    isOpen = false;
-    iframe.style.display = "none";
-  }
-
-  window.addEventListener("message", function (event) {
-    if (!event.data || typeof event.data !== "object") return;
-    if (event.data.type === "calead:close") closeWidget();
-  });
 
   function init() {
-    createBubble();
-    iframe = createIframe();
+    var container = createContainer();
+
+    window.addEventListener("message", function (event) {
+      if (!event.data || typeof event.data !== "object") return;
+      if (event.data.type === "calead:mode") {
+        setMode(container, event.data.mode);
+      } else if (event.data.type === "calead:hide") {
+        container.style.display = "none";
+      }
+    });
   }
 
   if (document.readyState === "loading") {
