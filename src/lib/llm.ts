@@ -120,7 +120,7 @@ export async function extractQualification(
     .map((m) => `${m.role === "user" ? "Visitante" : "Consultor"}: ${m.content}`)
     .join("\n");
 
-  const model = MODEL_CANDIDATES[0] ?? "llama-3.3-70b-versatile";
+  const model = MODEL_CANDIDATES.find(Boolean) ?? "llama-3.3-70b-versatile";
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
